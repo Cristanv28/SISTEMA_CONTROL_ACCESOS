@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Control de Acceso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center mb-4 header-bar pt-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-icon">
+                    <img src="img/Logo.png" alt="Control de Acceso" class="logo-img">
+                </div>
+                <div>
+                    <h4 class="mb-0">Sistema de Control de Acceso</h4>
+                    <small style="color:#94a3b8;">Monitoreo en Tiempo Real</small>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-success me-2" style="font-size: 0.9rem;">● Activo</span>
+                
+                <a href="Usuarios.html" class="btn btn-outline-secondary border-1 text-white">
+                    Usuarios
+                </a>
+                <a href="tarjeta.html" class="btn btn-outline-secondary border-1 text-white">
+                    💳 Tarjetas
+                </a>
+                <a href="historial.html" class="btn btn-outline-secondary border-1 text-white">
+                    🕒 Historial
+                </a>
+                <a href="facial.html" class="btn btn-outline-secondary border-1 text-white">
+                    Reconocimiento Facial
+                </a>
+                
+                <button class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalEmergencia" onclick="cargarCodigos()">
+                    🚨 MODO EMERGENCIA
+                </button>
+            </div>
+        </div>
+
+        <div id="bannerEmergencia" class="alert text-white text-center fw-bold mb-4" style="display:none; font-size:1.2rem;">
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div>
+                        <p class="text-white">Entradas Hoy</p>
+                        <h2 class="text-success" id="accesos_hoy">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div>
+                        <p class="text-white">Intentos Denegados</p>
+                        <h2 class="text-warning" id="denegados_hoy">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div>
+                        <p class="text-white">Estudiantes Activos</p>
+                        <h2 class="text-success" id="statEstudiantes">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div>
+                        <p class="text-white">Docentes Activos</p>
+                        <h2 class="text-success" id="statDocentes">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="card bg-dark text-white p-3">
+                    <h5>Registro en Tiempo Real</h5>
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Resultado</th>
+                                <th>Fecha / Hora</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaActividad">
+                            <tr><td colspan="4" class="text-center text-muted">🔄 Cargando flujo de datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card bg-dark text-white p-4">
+                    <h5>Control de Acceso</h5>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="modoAcceso" value="bloquear_entradas" id="r1">
+                        <label class="form-check-label" for="r1">Bloquear Entradas</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modoAcceso" value="bloquear_salidas" id="r2">
+                        <label class="form-check-label" for="r2">Bloquear Salidas</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modoAcceso" value="bloqueo_total" id="r3">
+                        <label class="form-check-label" for="r3">Bloqueo Total</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="modoAcceso" value="normal" id="r4" checked>
+                        <label class="form-check-label" for="r4">Normal (sin restricción)</label>
+                    </div>
+                    <button class="btn btn-danger w-100 mt-3" onclick="activarRestriccion()">
+                        Activar Restricción
+                    </button>
+                    <div id="modoActualBadge" class="mt-2 text-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEmergencia" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5>🚨 Configuración de Emergencia</h5>
+                    <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-warning">Código de emergencia autorizado:</label>
+                        <select class="form-select" id="selectCodigo">
+                            <option value="">-- Selecciona un código maestro --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo de Acción:</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoEmergencia" value="lockdown" id="teLockdown" checked>
+                            <label class="form-check-label" for="teLockdown">🔒 Lockdown (Cierre Total)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="tipoEmergencia" value="evacuacion" id="teEvacuacion">
+                            <label class="form-check-label" for="teEvacuacion">🚪 Evacuación (Apertura Total)</label>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 pt-2">
+                        <button class="btn btn-danger flex-fill fw-bold py-2" onclick="activarEmergencia()">
+                            🚨 Activar Emergencia
+                        </button>
+                        <button class="btn btn-secondary flex-fill fw-bold py-2" onclick="desactivarEmergencia()">
+                            ✅ Desactivar / Normalizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="js/supabase-config.js"></script>
+    
+    <script src="js/index.js"></script>
+
+    
+
+</body>
+
+</html>
