@@ -9,25 +9,7 @@
         /* HEADER */
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
         .header-brand{display:flex;align-items:center;gap:14px;}
-       .logo-container{
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #ffffff;
-    border: 3px solid rgba(255,255,255,.15);
-    box-shadow: 0 6px 18px rgba(0,0,0,.35);
-}
-
-.logo-img{
-    width:100%;
-    height:100%;
-    object-fit:cover;   /* llena el círculo */
-    border-radius:50%;
-}
+       
         .brand-title{font-size:1.1rem;font-weight:600;color:var(--text);}
         .brand-sub{font-size:0.78rem;color:var(--muted);margin-top:2px;}
         .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);margin-right:6px;animation:pulse 2s infinite;}
@@ -160,64 +142,141 @@
         font-size: 18px;
         letter-spacing: 0.02em;
     }
+/* ==========================================
+   HEADER / LOGO SCA (Reemplaza esta sección)
+   ========================================== */
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+}
+
+.header-brand{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.logo-container{
+    width:78px;
+    height:78px;
+    border-radius:50%;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-shrink:0;
+    background:#fff;
+    border:2px solid rgba(255,255,255,.15);
+    box-shadow:0 5px 18px rgba(0,0,0,.30);
+}
+
+.logo-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:50%;
+}
+
+.logo-info{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
 .logo-title{
-    font-family: 'Poppins', sans-serif;
-    font-size: 58px;
-    font-weight: 800;
-    letter-spacing: 3px;
-    line-height: 1;
-    text-transform: uppercase;
+    font-family:'Poppins',sans-serif;
+    font-size:52px;
+    font-weight:800;
+    line-height:1;
+    letter-spacing:2px;
+    margin:0;
+    text-transform:uppercase;
+    text-shadow:0 3px 8px rgba(0,0,0,.25);
 }
 
-.logo-title .s{
-    color:#ffffff;
-}
-
+.logo-title .s,
 .logo-title .c{
-    color:#ffffff;
+    color:#fff;
 }
 
 .logo-title .a{
-    background:linear-gradient(180deg,#67B8FF,#1E63E9);
+    background:linear-gradient(180deg,#74BFFF,#1F63E7);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
 }
+
 .subtitle{
-    color:#ffffff;
-    font-size:24px;
+    margin-top:6px;
+    color:#fff;
+    font-size:18px;
     font-weight:600;
-    letter-spacing:1px;
-    margin-top:8px;
+    line-height:1.2;
+    letter-spacing:.5px;
 }
 
 .university{
+    margin-top:8px;
+    display:flex;
+    align-items:center;
+    gap:14px;
     color:#4D8EFF;
-    font-size:16px;
-    font-weight:600;
-    text-transform:uppercase;
+    font-size:15px;
+    font-weight:700;
     letter-spacing:4px;
-    position:relative;
-    display:inline-block;
-    margin-top:5px;
+    text-transform:uppercase;
+    white-space:nowrap;
 }
 
 .university::before,
 .university::after{
     content:"";
-    position:absolute;
-    top:50%;
-    width:55px;
+    width:60px;
     height:3px;
+    border-radius:20px;
+    flex-shrink:0;
 }
 
 .university::before{
-    right:100%;
-    margin-right:15px;
     background:#2F7BFF;
 }
 
 .university::after{
-    left:100%;
-    margin-left:15px;
     background:#E53935;
 }
+
+@media(max-width:900px){
+
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
+
+    .header-brand{
+        width:100%;
+    }
+
+    .logo-title{
+        font-size:42px;
+    }
+
+    .subtitle{
+        font-size:16px;
+    }
+
+    .university{
+        font-size:13px;
+        letter-spacing:2px;
+    }
+
+    .university::before,
+    .university::after{
+        width:35px;
+    }
+}
+
