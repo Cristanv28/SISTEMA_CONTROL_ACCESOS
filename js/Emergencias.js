@@ -198,7 +198,7 @@ async function cargarCodigos() {
             const infoTel = item.telefono ? ` (Tel: ${item.telefono})` : '';
             select.innerHTML += `
                 <option value="${item.codigo}" data-color="${item.color}">
-                    ⚠️ [${item.codigo}] - ${item.descripcion}${infoTel}
+                     [${item.codigo}] - ${item.descripcion}${infoTel}
                 </option>
             `;
         });
@@ -222,10 +222,10 @@ async function verificarEmergenciasActivas() {
             banner.style.display = 'block';
             if (data.tipo === 'lockdown') {
                 banner.className = "alert bg-danger text-center fw-bold mb-4";
-                banner.innerHTML = "🚨 LOCKDOWN ACTIVADO: EL ACCESO AL ESTABLECIMIENTO ESTÁ COMPLETAMENTE BLOQUEADO 🔒";
+                banner.innerHTML = " BLOQUE ACTIVADO: EL ACCESO AL ESTABLECIMIENTO ESTÁ COMPLETAMENTE BLOQUEADO ";
             } else {
                 banner.className = "alert bg-warning text-dark text-center fw-bold mb-4";
-                banner.innerHTML = "🚪 EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS 🏃‍♂️";
+                banner.innerHTML = " EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS ";
             }
         } else {
             banner.style.display = 'none';
