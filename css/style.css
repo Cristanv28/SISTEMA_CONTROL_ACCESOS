@@ -142,9 +142,7 @@
         font-size: 18px;
         letter-spacing: 0.02em;
     }
-/* ==========================================
-   HEADER / LOGO SCA (Reemplaza esta sección)
-   ========================================== */
+
 
 .header{
     display:flex;
@@ -162,8 +160,8 @@
 }
 
 .logo-container{
-    width:78px;
-    height:78px;
+    width:85px;
+    height:85px;
     border-radius:50%;
     overflow:hidden;
     display:flex;
