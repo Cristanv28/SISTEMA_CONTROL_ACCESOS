@@ -160,3 +160,64 @@
         font-size: 18px;
         letter-spacing: 0.02em;
     }
+.logo-title{
+    font-family: 'Poppins', sans-serif;
+    font-size: 58px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.logo-title .s{
+    color:#ffffff;
+}
+
+.logo-title .c{
+    color:#ffffff;
+}
+
+.logo-title .a{
+    background:linear-gradient(180deg,#67B8FF,#1E63E9);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+.subtitle{
+    color:#ffffff;
+    font-size:24px;
+    font-weight:600;
+    letter-spacing:1px;
+    margin-top:8px;
+}
+
+.university{
+    color:#4D8EFF;
+    font-size:16px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:4px;
+    position:relative;
+    display:inline-block;
+    margin-top:5px;
+}
+
+.university::before,
+.university::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:55px;
+    height:3px;
+}
+
+.university::before{
+    right:100%;
+    margin-right:15px;
+    background:#2F7BFF;
+}
+
+.university::after{
+    left:100%;
+    margin-left:15px;
+    background:#E53935;
+}
