@@ -222,10 +222,10 @@ async function verificarEmergenciasActivas() {
             banner.style.display = 'block';
             if (data.tipo === 'lockdown') {
                 banner.className = "alert bg-danger text-center fw-bold mb-4";
-                banner.innerHTML = " BLOQUE ACTIVADO: EL ACCESO AL ESTABLECIMIENTO ESTÁ COMPLETAMENTE BLOQUEADO ";
+                banner.innerHTML = " BLOQUE ACTIVADO: EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO ";
             } else {
                 banner.className = "alert bg-warning text-dark text-center fw-bold mb-4";
-                banner.innerHTML = " EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS ";
+                banner.innerHTML = " EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA ABIERTO ";
             }
         } else {
             banner.style.display = 'none';
