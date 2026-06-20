@@ -178,7 +178,7 @@ function actualizarBadgeModo(modo) {
 }
 
 /**
- * 4. GESTIÓN DEL MÓDULO DE EMERGENCIAS (ESTRUCTURA DE BD CORREGIDA)
+ * 4. GESTIÓN DEL MÓDULO DE EMERGENCIAS 
  */
 async function cargarCodigos() {
     try {
@@ -278,6 +278,10 @@ async function activarEmergencia() {
 
     } catch (err) {
         alert("Error al activar emergencia: " + err.message);
+    }
+    // Si el socket está abierto, le avisa de golpe al ESP32 qué tipo de emergencia es
+    if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
+    esp32Socket.send(`EMERGENCIA:${tipo}`);
     }
 }
 
