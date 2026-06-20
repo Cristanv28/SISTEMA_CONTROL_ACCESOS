@@ -245,6 +245,7 @@ async function verificarEmergenciasActivas() {
         console.error("Error al comprobar banderas de emergencia:", err.message); 
     }
 }
+
 async function activarEmergencia() {
     const codigoId = document.getElementById('selectCodigoEmergencia').value;
     const tipoElemento = document.querySelector('input[name="tipoAccion"]:checked');
@@ -253,7 +254,7 @@ async function activarEmergencia() {
     const codigoIdFinal = codigoId !== "" ? codigoId : null;
 
     try {
-        // CORRECCIÓN SÚPER CRÍTICA: Mandamos 'activo: true' y 'codigo_id'
+        // 1. Guardar en Supabase
         const { error: errActiva } = await dbClient
             .from('emergencias_activas')
             .insert([{ 
@@ -264,13 +265,17 @@ async function activarEmergencia() {
 
         if (errActiva) throw errActiva;
 
-        // Cambiar el modo de acceso en las compuertas
+        // 2. Cambiar modo de acceso
         const modoBloqueo = (tipo === 'lockdown') ? 'bloqueo_total' : 'normal';
         await dbClient.from('modo_acceso').update({ modo: modoBloqueo }).eq('id', 1);
 
+        // 🚀 3. AVISO INMEDIATO AL ESP32 POR WEBSOCKET
+        if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
+            esp32Socket.send(`EMERGENCIA:${tipo}`); // Envía "EMERGENCIA:lockdown" o "EMERGENCIA:evacuacion"
+        }
+
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         
-        // Refrescar componentes de la pantalla
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         
@@ -279,15 +284,11 @@ async function activarEmergencia() {
     } catch (err) {
         alert("Error al activar emergencia: " + err.message);
     }
-    // Si el socket está abierto, le avisa de golpe al ESP32 qué tipo de emergencia es
-    if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
-    esp32Socket.send(`EMERGENCIA:${tipo}`);
-    }
 }
 
 async function desactivarEmergencia() {
     try {
-        // Pasamos el registro activo a false e inyectamos fecha de cierre
+        // 1. Desactivar en Supabase
         const { error } = await dbClient
             .from('emergencias_activas')
             .update({ 
@@ -298,12 +299,16 @@ async function desactivarEmergencia() {
 
         if (error) throw error;
 
-        // Regresar la restricción de las puertas al modo normal
+        // 2. Regresar compuertas a la normalidad
         await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
+
+        // 🚀 3. AVISO DE APAGADO AL ESP32 POR WEBSOCKET
+        if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
+            esp32Socket.send("NORMALIZAR"); // Le dice al ESP32 que apague el buzzer y limpie el LCD
+        }
 
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         
-        // Sincronizar vista de nuevo
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         
