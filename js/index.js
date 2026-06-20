@@ -183,38 +183,40 @@ function actualizarBadgeModo(modo) {
 async function cargarCodigos() {
     try {
         console.log("Cargando códigos de emergencia maestros...");
-        const select = document.getElementById('selectCodigoEmergencia');
+        const select = document.getElementById('selectCodigoEmergencia') || document.getElementById('selectCodigo');
         if (!select) return;
         
         select.innerHTML = '<option value="">-- Selecciona un código maestro --</option>';
 
-        // Consultamos las columnas reales: id (UUID), nombre, color
+        // CONSULTA CORREGIDA: descripcion y codigo en lugar de nombre
         const { data, error } = await dbClient
             .from('codigos_emergencia')
-            .select('id, nombre, color');
+            .select('id, codigo, descripcion, color')
+            .eq('activo', true);
 
         if (error) throw error;
-
+        
         if (!data || data.length === 0) {
-            select.innerHTML += '<option value="" disabled>No hay códigos de emergencia activos en la BD</option>';
+            select.innerHTML += '<option value="" disabled>No hay códigos activos en la Base de Datos</option>';
             return;
         }
 
         data.forEach(item => {
             select.innerHTML += `
-                <option value="${item.id}" data-color="${item.color.toLowerCase()}">
-                     ⚠️ [CÓDIGO ${item.color.toUpperCase()}] - ${item.nombre}
+                <option value="${item.id}" data-color="${item.color ? item.color.toLowerCase() : ''}">
+                    ⚠️ [${item.codigo}] - ${item.descripcion}
                 </option>
             `;
         });
-        console.log("Códigos cargados correctamente.");
-    } catch (err) {
-        console.error("Error cargando códigos de emergencia:", err.message);
+        console.log("¡Códigos inyectados con éxito en el select!");
+    } catch (err) { 
+        console.error("Error al traer códigos de emergencia:", err.message); 
     }
 }
 
 async function verificarEmergenciasActivas() {
     try {
+        // CONSULTA CORREGIDA: Filtramos por la columna 'activo' (true) en lugar de 'estado'
         const { data, error } = await dbClient
             .from('emergencias_activas')
             .select('*')
@@ -243,7 +245,6 @@ async function verificarEmergenciasActivas() {
         console.error("Error al comprobar banderas de emergencia:", err.message); 
     }
 }
-
 async function activarEmergencia() {
     const codigoId = document.getElementById('selectCodigoEmergencia').value;
     const tipoElemento = document.querySelector('input[name="tipoAccion"]:checked');
