@@ -1,4 +1,6 @@
-// js/index.js
+// ====================================================================
+//                            js/index.js
+// ====================================================================
 
 // Apuntamos al cliente global de Supabase configurado en tu script maestro
 const dbClient = window.db || window.supabase;
@@ -7,7 +9,21 @@ let modalEmergenciaInstance;
 
 document.addEventListener("DOMContentLoaded", () => {
     const modalEl = document.getElementById('modalEmergencia');
-    if (modalEl) modalEmergenciaInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    if (modalEl) {
+        modalEmergenciaInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        
+        // EVENTO CLAVE: Cuando el modal se abra, carga de forma automática los códigos maestros
+        modalEl.addEventListener('show.bs.modal', () => {
+            cargarCodigos();
+        });
+    }
+
+    // Vinculamos los eventos click a los botones usando los IDs del nuevo HTML
+    const btnActivar = document.getElementById("btnActivarEmergencia");
+    const btnDesactivar = document.getElementById("btnDesactivarEmergencia");
+
+    if (btnActivar) btnActivar.addEventListener("click", activarEmergencia);
+    if (btnDesactivar) btnDesactivar.addEventListener("click", desactivarEmergencia);
 
     // Inicializar lógica de la plataforma
     cargarContadoresGlobales();
@@ -17,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * 1. ESTADÍSTICAS GLOBALES (CON BLOQUES TRY/CATCH INDEPENDIENTES)
+ * 1. ESTADÍSTICAS GLOBALES
  */
 async function cargarContadoresGlobales() {
     const hoyStr = new Date().toISOString().split('T')[0];
@@ -46,8 +62,7 @@ async function cargarContadoresGlobales() {
         }
     } catch (err) { console.error("Error en contador denegados:", err.message); }
 
-    // C. Estudiantes Totales / Activos
-    // Nota: Eliminamos el filtro .eq('estado', 'Activo') para evitar el error 400 si la columna no existe
+    // C. Estudiantes Totales
     try {
         const { count: estActivos, error } = await dbClient
             .from('estudiantes')
@@ -58,7 +73,7 @@ async function cargarContadoresGlobales() {
         }
     } catch (err) { console.error("Error en contador estudiantes:", err.message); }
 
-    // D. Docentes Totales / Activos
+    // D. Docentes Totales
     try {
         const { count: docActivos, error } = await dbClient
             .from('docentes')
@@ -75,7 +90,6 @@ async function cargarContadoresGlobales() {
  */
 async function cargarMonitoreoTiempoReal() {
     try {
-        // Hacemos una consulta limpia a entradas_salidas
         const { data, error } = await dbClient
             .from('entradas_salidas')
             .select('*')
@@ -94,7 +108,6 @@ async function cargarMonitoreoTiempoReal() {
         }
 
         data.forEach(reg => {
-            // Ajuste dinámico por si manejas nombre directo o relacional
             const nombreUsuario = reg.nombre ? `${reg.nombre} ${reg.apellido || ''}` : `Usuario #${reg.id_usuario || 'Anon'}`;
             const badge = reg.tipo === 'Entrada' 
                 ? `<span class="badge bg-success">Entrada</span>` 
@@ -148,29 +161,33 @@ function actualizarBadgeModo(modo) {
 }
 
 /**
- * 4. SISTEMA DE EMERGENCIAS
+ * 4. SISTEMA DE EMERGENCIAS (CORREGIDO PARA TU BASE DE DATOS REAL)
  */
 async function cargarCodigos() {
     try {
-        // Consultamos usando tu columna booleana 'activo'
-        const { data, error } = await dbClient
-            .from('codigos_emergencia')
-            .select('codigo, descripcion, color, telefono')
-            .eq('activo', true);
-
-        if (error) throw error;
-        const select = document.getElementById('selectCodigo');
+        console.log("Cargando códigos de emergencia maestros...");
+        // Modificado id para que apunte a 'selectCodigoEmergencia' del nuevo HTML
+        const select = document.getElementById('selectCodigoEmergencia');
         if (!select) return;
         
         select.innerHTML = '<option value="">-- Selecciona un código maestro --</option>';
+
+        // Consultamos la estructura real de tu tabla: id, nombre, color
+        const { data, error } = await dbClient
+            .from('codigos_emergencia')
+            .select('id, nombre, color');
+
+        if (error) throw error;
+        
         if (!data || data.length === 0) {
-            select.innerHTML += '<option value="" disabled>No hay códigos activos en la Base de Datos</option>';
+            select.innerHTML += '<option value="" disabled>No hay códigos en la Base de Datos</option>';
             return;
         }
 
         data.forEach(item => {
-            select.innerHTML += `<option value="${item.codigo}">⚠️ [${item.codigo}] - ${item.descripcion}</option>`;
+            select.innerHTML += `<option value="${item.id}">⚠️ [CÓDIGO ${item.color.toUpperCase()}] - ${item.nombre}</option>`;
         });
+        console.log("Códigos inyectados con éxito.");
     } catch (err) { 
         console.error("Error al traer códigos de emergencia:", err.message); 
     }
@@ -178,10 +195,11 @@ async function cargarCodigos() {
 
 async function verificarEmergenciasActivas() {
     try {
-        // Quitamos filtros estrictos de texto para evitar el 400 Bad Request
+        // Buscamos si hay alertas activas en tu tabla
         const { data, error } = await dbClient
             .from('emergencias_activas')
             .select('*')
+            .eq('activo', true)
             .limit(1);
 
         if (error) throw error;
@@ -203,37 +221,65 @@ async function verificarEmergenciasActivas() {
 }
 
 async function activarEmergencia() {
-    const codigo = document.getElementById('selectCodigo').value;
-    const tipoElemento = document.querySelector('input[name="tipoEmergencia"]:checked');
-    if (!codigo) return alert("Selecciona un código de autorización válido.");
-    const tipo = tipoElemento ? tipoElemento.value : 'lockdown';
+    const codigoId = document.getElementById('selectCodigoEmergencia').value;
+    const tipoElemento = document.querySelector('input[name="tipoAccion"]:checked');
+    
+    const tipo = tipoElemento ? tipoElemento.value.toLowerCase() : 'lockdown';
+    // Si no selecciona un código del desplegable lo mandamos como null (tu BD lo permite)
+    const codigoIdFinal = codigoId !== "" ? codigoId : null; 
 
     try {
-        const { error: errActiva } = await dbClient.from('emergencias_activas').insert([{ tipo: tipo, estado: 'Activo' }]);
+        // CORRECCIÓN DE ERROR 400: Mandamos 'activo: true' en lugar de 'estado: Activo'
+        const { error: errActiva } = await dbClient
+            .from('emergencias_activas')
+            .insert([{ 
+                tipo: tipo, 
+                codigo_id: codigoIdFinal, 
+                activo: true 
+            }]);
+            
         if (errActiva) throw errActiva;
 
+        // Sincronizamos el estado de las compuertas en modo_acceso
         await dbClient.from('modo_acceso').update({ modo: tipo === 'lockdown' ? 'bloqueo_total' : 'normal' }).eq('id', 1);
         
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
-        alert("¡Protocolo de emergencia desplegado!");
-    } catch (err) { alert("Error al activar protocolo: " + err.message); }
+        alert(`🚨 ¡Protocolo de ${tipo.toUpperCase()} desplegado con éxito!`);
+    } catch (err) { 
+        alert("Error al activar protocolo: " + err.message); 
+    }
 }
 
 async function desactivarEmergencia() {
     try {
-        // Limpieza de contingencias
-        await dbClient.from('emergencias_activas').delete().neq('tipo', 'sistema_vacio_limpieza');
+        // Cambiamos el estado lógico a activo = false e inyectamos la fecha de desactivación
+        const { error } = await dbClient
+            .from('emergencias_activas')
+            .update({ 
+                activo: false, 
+                desactivado_en: new Date().toISOString() 
+            })
+            .eq('activo', true);
+
+        if (error) throw error;
+
+        // Reestablecemos el modo de acceso a normal
         await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
         
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         alert("Sistema restablecido a modo normal.");
-    } catch (err) { alert("Error al desactivar protocolo: " + err.message); }
+    } catch (err) { 
+        alert("Error al desactivar protocolo: " + err.message); 
+    }
 }
 
+/**
+ * 5. CONEXIÓN WEBSOCKET CON ESP32
+ */
 const esp32Socket = new WebSocket("ws://192.168.101.200:81");
 
 esp32Socket.onopen = () => {
@@ -244,16 +290,12 @@ esp32Socket.onmessage = (event) => {
     const mensaje = event.data;
     console.log("Mensaje desde el ESP32:", mensaje);
 
-    // Si el ESP32 manda la señal de captura de registro
     if (mensaje.startsWith("SCAN_REGISTRO:")) {
         const uidCapturado = mensaje.split(":")[1];
-        
-        // Buscamos el input de tu interfaz donde se debe poner el código RFID
         const inputUID = document.getElementById("uid_codigo") || document.getElementById("inputTarjeta"); 
         
         if (inputUID) {
             inputUID.value = uidCapturado;
-            // Opcional: Un pitido o notificación visual en la web
             alert("¡Tarjeta detectada en el lector! UID copiado: " + uidCapturado);
         }
     }
