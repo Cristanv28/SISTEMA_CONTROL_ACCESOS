@@ -2,91 +2,92 @@
 //                            js/index.js
 // ====================================================================
 
-// Apuntamos al cliente global de Supabase configurado en tu script maestro
-const dbClient = window.db || window.supabase;
-
+const dbClient = window.supabase; // Cliente global de Supabase
 let modalEmergenciaInstance;
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Inicializar el modal de Bootstrap de forma segura
     const modalEl = document.getElementById('modalEmergencia');
     if (modalEl) {
         modalEmergenciaInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
         
-        // EVENTO CLAVE: Cuando el modal se abra, carga de forma automática los códigos maestros
+        // EVENTO AUTOMÁTICO: Cuando se abra el modal, se cargan los códigos maestros
         modalEl.addEventListener('show.bs.modal', () => {
             cargarCodigos();
         });
     }
 
-    // Vinculamos los eventos click a los botones usando los IDs del nuevo HTML
+    // Vinculamos los eventos click a los botones usando los IDs del nuevo HTML limpio
     const btnActivar = document.getElementById("btnActivarEmergencia");
     const btnDesactivar = document.getElementById("btnDesactivarEmergencia");
 
     if (btnActivar) btnActivar.addEventListener("click", activarEmergencia);
     if (btnDesactivar) btnDesactivar.addEventListener("click", desactivarEmergencia);
 
-    // Inicializar lógica de la plataforma
+    // Inicializar los componentes y consultas del sistema
     cargarContadoresGlobales();
     cargarModoAccesoActual();
     cargarMonitoreoTiempoReal();
     verificarEmergenciasActivas();
+
+    // Evento visual: Cambia el borde del select según el color del código seleccionado
+    const selectCodigoEl = document.getElementById('selectCodigoEmergencia');
+    if (selectCodigoEl) {
+        selectCodigoEl.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const color = selectedOption.getAttribute('data-color');
+            if (color) {
+                this.style.borderLeft = `5px solid ${color}`;
+                this.style.fontWeight = 'bold';
+            } else {
+                this.style.borderLeft = '';
+            }
+        });
+    }
 });
 
 /**
- * 1. ESTADÍSTICAS GLOBALES
+ * 1. RECOLECTA ESTADÍSTICAS EN TIEMPO REAL
  */
 async function cargarContadoresGlobales() {
-    const hoyStr = new Date().toISOString().split('T')[0];
-
-    // A. Entradas de hoy
     try {
-        const { count: entradasHoy, error } = await dbClient
+        const hoyStr = new Date().toISOString().split('T')[0];
+
+        // A. Entradas de hoy
+        const { count: entradasHoy, error: errEnt } = await dbClient
             .from('entradas_salidas')
             .select('*', { count: 'exact', head: true })
             .eq('fecha', hoyStr)
             .eq('tipo', 'Entrada');
-        
-        if (!error && document.getElementById('accesos_hoy')) {
-            document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
-        }
-    } catch (err) { console.error("Error en contador entradas:", err.message); }
 
-    // B. Intentos denegados
-    try {
-        const { count: denegadosHoy, error } = await dbClient
+        // B. Intentos denegados de hoy
+        const { count: denegadosHoy, error: errDen } = await dbClient
             .from('accesos_denegados')
             .select('*', { count: 'exact', head: true });
-        
-        if (!error && document.getElementById('denegados_hoy')) {
-            document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
-        }
-    } catch (err) { console.error("Error en contador denegados:", err.message); }
 
-    // C. Estudiantes Totales
-    try {
-        const { count: estActivos, error } = await dbClient
+        // C. Estudiantes Activos
+        const { count: estActivos, error: errEst } = await dbClient
             .from('estudiantes')
             .select('*', { count: 'exact', head: true });
 
-        if (!error && document.getElementById('statEstudiantes')) {
-            document.getElementById('statEstudiantes').innerText = estActivos || 0;
-        }
-    } catch (err) { console.error("Error en contador estudiantes:", err.message); }
-
-    // D. Docentes Totales
-    try {
-        const { count: docActivos, error } = await dbClient
+        // D. Docentes Activos
+        const { count: docActivos, error: errDoc } = await dbClient
             .from('docentes')
             .select('*', { count: 'exact', head: true });
 
-        if (!error && document.getElementById('statDocentes')) {
-            document.getElementById('statDocentes').innerText = docActivos || 0;
-        }
-    } catch (err) { console.error("Error en contador docentes:", err.message); }
+        // Inyectar valores de forma segura en el DOM
+        if (!errEnt && document.getElementById('accesos_hoy')) document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
+        if (!errDen && document.getElementById('denegados_hoy')) document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
+        if (!errEst && document.getElementById('statEstudiantes')) document.getElementById('statEstudiantes').innerText = estActivos || 0;
+        if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
+
+    } catch (err) {
+        console.error("Error al cargar contadores globales:", err.message);
+    }
 }
 
 /**
- * 2. MONITOR DE ACTIVIDAD EN TIEMPO REAL
+ * 2. MONITOR DE ACTIVIDAD EN TIEMPO REAL (HISTORIAL RECIENTE)
  */
 async function cargarMonitoreoTiempoReal() {
     try {
@@ -97,32 +98,34 @@ async function cargarMonitoreoTiempoReal() {
             .limit(8);
 
         if (error) throw error;
-        
+
         const tbody = document.getElementById('tablaActividad');
         if (!tbody) return;
         tbody.innerHTML = "";
 
         if (!data || data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Sin actividad registrada.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Sin actividad registrada el día de hoy.</td></tr>`;
             return;
         }
 
         data.forEach(reg => {
-            const nombreUsuario = reg.nombre ? `${reg.nombre} ${reg.apellido || ''}` : `Usuario #${reg.id_usuario || 'Anon'}`;
-            const badge = reg.tipo === 'Entrada' 
-                ? `<span class="badge bg-success">Entrada</span>` 
-                : `<span class="badge bg-primary">Salida</span>`;
+            const nombre = reg.nombre ? `${reg.nombre} ${reg.apellido || ''}` : `Usuario #${reg.id_usuario || 'Anon'}`;
+            const badgeTipo = reg.tipo === 'Entrada' 
+                ? `<span class="badge bg-success-subtle text-success text-uppercase">Entrada</span>`
+                : `<span class="badge bg-primary-subtle text-primary text-uppercase">Salida</span>`;
 
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${nombreUsuario}</strong></td>
-                    <td><span class="text-muted" style="font-size:0.85rem;">NFC / Biométrico</span></td>
-                    <td>${badge}</td>
+                    <td><strong>${nombre}</strong></td>
+                    <td><span class="text-muted" style="font-size:0.85rem;">Identificador Biométrico/NFC</span></td>
+                    <td>${badgeTipo}</td>
                     <td class="font-monospace" style="font-size:0.85rem;">${reg.fecha || ''} ${reg.hora || ''}</td>
-                </tr>`;
+                </tr>
+            `;
         });
-    } catch (err) { 
-        console.error("Error en monitoreo de tiempo real:", err.message); 
+
+    } catch (err) {
+        console.error("Error en monitoreo de tiempo real:", err.message);
     }
 }
 
@@ -131,71 +134,87 @@ async function cargarMonitoreoTiempoReal() {
  */
 async function cargarModoAccesoActual() {
     try {
-        const { data, error } = await dbClient.from('modo_acceso').select('modo').eq('id', 1).maybeSingle();
+        const { data, error } = await dbClient
+            .from('modo_acceso')
+            .select('modo')
+            .eq('id', 1)
+            .maybeSingle();
+
         if (error || !data) return;
-        
+
         const radio = document.querySelector(`input[name="modoAcceso"][value="${data.modo}"]`);
         if (radio) radio.checked = true;
+
         actualizarBadgeModo(data.modo);
-    } catch (err) { console.error("Error cargando modo de acceso:", err.message); }
+    } catch (err) { 
+        console.error("Error al obtener el modo de acceso:", err.message); 
+    }
 }
 
 async function activarRestriccion() {
-    const elementoCheck = document.querySelector('input[name="modoAcceso"]:checked');
-    if (!elementoCheck) return;
-    const seleccionado = elementoCheck.value;
-    
+    const seleccionado = document.querySelector('input[name="modoAcceso"]:checked').value;
     try {
-        const { error } = await dbClient.from('modo_acceso').update({ modo: seleccionado }).eq('id', 1);
+        const { error } = await dbClient
+            .from('modo_acceso')
+            .update({ modo: seleccionado })
+            .eq('id', 1);
+
         if (error) throw error;
         actualizarBadgeModo(seleccionado);
-        alert("Restricción de acceso actualizada.");
-    } catch (err) { alert("No se pudo aplicar la restricción: " + err.message); }
+        alert(`Modo de restricción actualizado con éxito a: ${seleccionado.toUpperCase()}`);
+    } catch (err) {
+        alert("Error al aplicar la restricción: " + err.message);
+    }
 }
 
 function actualizarBadgeModo(modo) {
     const badge = document.getElementById('modoActualBadge');
-    if (badge) {
-        badge.innerHTML = `<span class="badge ${modo === 'normal' ? 'bg-success' : 'bg-warning text-dark'} px-3 py-2">MODO ACTUAL: ${modo.toUpperCase()}</span>`;
+    if (!badge) return;
+    if (modo === 'normal') {
+        badge.innerHTML = `<span class="badge bg-success px-3 py-1.5">MODO ACTUAL: NORMAL</span>`;
+    } else {
+        badge.innerHTML = `<span class="badge bg-warning text-dark px-3 py-1.5">MODO ACTUAL: ${modo.toUpperCase()}</span>`;
     }
 }
 
 /**
- * 4. SISTEMA DE EMERGENCIAS (CORREGIDO PARA TU BASE DE DATOS REAL)
+ * 4. GESTIÓN DEL MÓDULO DE EMERGENCIAS (ESTRUCTURA DE BD CORREGIDA)
  */
 async function cargarCodigos() {
     try {
         console.log("Cargando códigos de emergencia maestros...");
-        // Modificado id para que apunte a 'selectCodigoEmergencia' del nuevo HTML
         const select = document.getElementById('selectCodigoEmergencia');
         if (!select) return;
         
         select.innerHTML = '<option value="">-- Selecciona un código maestro --</option>';
 
-        // Consultamos la estructura real de tu tabla: id, nombre, color
+        // Consultamos las columnas reales: id (UUID), nombre, color
         const { data, error } = await dbClient
             .from('codigos_emergencia')
             .select('id, nombre, color');
 
         if (error) throw error;
-        
+
         if (!data || data.length === 0) {
-            select.innerHTML += '<option value="" disabled>No hay códigos en la Base de Datos</option>';
+            select.innerHTML += '<option value="" disabled>No hay códigos de emergencia activos en la BD</option>';
             return;
         }
 
         data.forEach(item => {
-            select.innerHTML += `<option value="${item.id}">⚠️ [CÓDIGO ${item.color.toUpperCase()}] - ${item.nombre}</option>`;
+            select.innerHTML += `
+                <option value="${item.id}" data-color="${item.color.toLowerCase()}">
+                     ⚠️ [CÓDIGO ${item.color.toUpperCase()}] - ${item.nombre}
+                </option>
+            `;
         });
-        console.log("Códigos inyectados con éxito.");
-    } catch (err) { 
-        console.error("Error al traer códigos de emergencia:", err.message); 
+        console.log("Códigos cargados correctamente.");
+    } catch (err) {
+        console.error("Error cargando códigos de emergencia:", err.message);
     }
 }
 
 async function verificarEmergenciasActivas() {
     try {
-        // Buscamos si hay alertas activas en tu tabla
         const { data, error } = await dbClient
             .from('emergencias_activas')
             .select('*')
@@ -203,33 +222,37 @@ async function verificarEmergenciasActivas() {
             .limit(1);
 
         if (error) throw error;
-        
+
         const banner = document.getElementById('bannerEmergencia');
         if (!banner) return;
 
         if (data && data.length > 0) {
             const emergencia = data[0];
             banner.style.display = 'block';
-            banner.className = emergencia.tipo === 'lockdown' ? "alert bg-danger text-center fw-bold mb-4" : "alert bg-warning text-dark text-center fw-bold mb-4";
-            banner.innerHTML = emergencia.tipo === 'lockdown' ? "🚨 LOCKDOWN ACTIVADO: ACCESO TOTALMENTE BLOQUEADO 🔒" : "🚪 EVACUACIÓN ACTIVA: ACCESOS LIBERADOS 🏃‍♂️";
+            if (emergencia.tipo === 'lockdown') {
+                banner.className = "alert bg-danger text-center fw-bold mb-4";
+                banner.innerHTML = "🚨 LOCKDOWN ACTIVADO: EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO 🔒";
+            } else {
+                banner.className = "alert bg-warning text-dark text-center fw-bold mb-4";
+                banner.innerHTML = "🚪 EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS 🏃‍♂️";
+            }
         } else {
             banner.style.display = 'none';
         }
     } catch (err) { 
-        console.error("Error verificando banderas de emergencia:", err.message); 
+        console.error("Error al comprobar banderas de emergencia:", err.message); 
     }
 }
 
 async function activarEmergencia() {
     const codigoId = document.getElementById('selectCodigoEmergencia').value;
     const tipoElemento = document.querySelector('input[name="tipoAccion"]:checked');
-    
+
     const tipo = tipoElemento ? tipoElemento.value.toLowerCase() : 'lockdown';
-    // Si no selecciona un código del desplegable lo mandamos como null (tu BD lo permite)
-    const codigoIdFinal = codigoId !== "" ? codigoId : null; 
+    const codigoIdFinal = codigoId !== "" ? codigoId : null;
 
     try {
-        // CORRECCIÓN DE ERROR 400: Mandamos 'activo: true' en lugar de 'estado: Activo'
+        // CORRECCIÓN SÚPER CRÍTICA: Mandamos 'activo: true' y 'codigo_id'
         const { error: errActiva } = await dbClient
             .from('emergencias_activas')
             .insert([{ 
@@ -237,43 +260,51 @@ async function activarEmergencia() {
                 codigo_id: codigoIdFinal, 
                 activo: true 
             }]);
-            
+
         if (errActiva) throw errActiva;
 
-        // Sincronizamos el estado de las compuertas en modo_acceso
-        await dbClient.from('modo_acceso').update({ modo: tipo === 'lockdown' ? 'bloqueo_total' : 'normal' }).eq('id', 1);
-        
+        // Cambiar el modo de acceso en las compuertas
+        const modoBloqueo = (tipo === 'lockdown') ? 'bloqueo_total' : 'normal';
+        await dbClient.from('modo_acceso').update({ modo: modoBloqueo }).eq('id', 1);
+
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
+        
+        // Refrescar componentes de la pantalla
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
-        alert(`🚨 ¡Protocolo de ${tipo.toUpperCase()} desplegado con éxito!`);
-    } catch (err) { 
-        alert("Error al activar protocolo: " + err.message); 
+        
+        alert(`🚨 ¡Protocolo de ${tipo.toUpperCase()} propagado de forma exitosa!`);
+
+    } catch (err) {
+        alert("Error al activar emergencia: " + err.message);
     }
 }
 
 async function desactivarEmergencia() {
     try {
-        // Cambiamos el estado lógico a activo = false e inyectamos la fecha de desactivación
+        // Pasamos el registro activo a false e inyectamos fecha de cierre
         const { error } = await dbClient
             .from('emergencias_activas')
             .update({ 
-                activo: false, 
-                desactivado_en: new Date().toISOString() 
+                activo: false,
+                desactivado_en: new Date().toISOString()
             })
             .eq('activo', true);
 
         if (error) throw error;
 
-        // Reestablecemos el modo de acceso a normal
+        // Regresar la restricción de las puertas al modo normal
         await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
-        
+
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
+        
+        // Sincronizar vista de nuevo
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
-        alert("Sistema restablecido a modo normal.");
-    } catch (err) { 
-        alert("Error al desactivar protocolo: " + err.message); 
+        
+        alert("Sistema normalizado. Parámetros de control reestablecidos.");
+    } catch (err) {
+        alert("Error al desactivar protocolo: " + err.message);
     }
 }
 
