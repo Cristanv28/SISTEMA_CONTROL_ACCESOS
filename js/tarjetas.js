@@ -10,6 +10,24 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarUsuariosSelect();
 });
 
+// 0. ABRIR EL MODAL DE REGISTRO (faltaba esta funcion, por eso el error en consola)
+function abrirModalRegistro() {
+    // Resetea el modal al paso inicial por si quedo en otro estado de una vez anterior
+    document.getElementById('pasoSeleccion').style.display = 'block';
+    document.getElementById('pasoEsperando').style.display = 'none';
+    document.getElementById('pasoExito').style.display = 'none';
+    document.getElementById('bannerRegistro').style.display = 'none';
+
+    // Refresca la lista de usuarios cada vez que se abre, por si hubo cambios
+    cargarUsuariosSelect();
+
+    if (modalRegistroInstance) {
+        modalRegistroInstance.show();
+    } else {
+        console.error("El modal de registro no se inicializo correctamente.");
+    }
+}
+
 // 1. ESTADÍSTICAS RECOLECTADAS DE TU TABLA PERSONAS
 async function cargarEstadisticas() {
     try {
