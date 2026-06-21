@@ -123,16 +123,16 @@ async function iniciarModoRegistro() {
     document.getElementById('bannerRegistro').style.display = 'block';
 
     try {
-        // Insertamos la solicitud pendiente vinculando la FK persona_id (integer)
+        
         const { error } = await supabase
             .from('registro_tarjeta_pendiente')
             .insert([{ persona_id: parseInt(personaId), activo: true }]);
 
         if (error) throw error;
 
-        // Simulación: El ESP32 lee la fila, procesa y apaga la bandera a los 4s
+
         setTimeout(async () => {
-            // Simulamos que el ESP32 asocia la tarjeta con éxito y desactiva el pendiente
+        
             await supabase
                 .from('registro_tarjeta_pendiente')
                 .update({ activo: false })
