@@ -1,30 +1,91 @@
 // js/tarjetas.js
 let modalRegistroInstance;
+let rolSeleccionado = null;
+let modoPersonaActual = 'existente'; // 'existente' | 'nueva'
+
+// Mapa: que campo extra (ademas de "puesto") pide cada rol de empleado, y a que tabla va
+const CONFIG_ROL_EMPLEADO = {
+    'Docente':        { tabla: 'docentes',        campoExtra: 'departamento', label: 'Departamento' },
+    'Administrativo': { tabla: 'administrativos', campoExtra: 'area',         label: 'Área' },
+    'Director':       { tabla: 'directores',      campoExtra: 'departamento', label: 'Departamento' },
+    'Coordinador':    { tabla: 'coordinadores',   campoExtra: 'programa',     label: 'Programa' },
+    'Empleado':       { tabla: null,               campoExtra: null,          label: null } // solo tabla empleados, sin subtabla
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const modalEl = document.getElementById('modalRegistro');
     if (modalEl) modalRegistroInstance = new bootstrap.Modal(modalEl);
-    
+
     cargarEstadisticas();
     cargarTablaTarjetas();
     cargarUsuariosSelect();
 });
 
-// 0. ABRIR EL MODAL DE REGISTRO (faltaba esta funcion, por eso el error en consola)
+// 0. ABRIR EL MODAL DE REGISTRO
 function abrirModalRegistro() {
-    // Resetea el modal al paso inicial por si quedo en otro estado de una vez anterior
     document.getElementById('pasoSeleccion').style.display = 'block';
     document.getElementById('pasoEsperando').style.display = 'none';
     document.getElementById('pasoExito').style.display = 'none';
     document.getElementById('bannerRegistro').style.display = 'none';
 
-    // Refresca la lista de usuarios cada vez que se abre, por si hubo cambios
+    // Reset de formulario de persona nueva
+    document.getElementById('nuevoNombre').value = '';
+    document.getElementById('nuevoApellido').value = '';
+    document.getElementById('nuevoCorreo').value = '';
+    document.getElementById('nuevoTelefono').value = '';
+    document.getElementById('alumnoMatricula').value = '';
+    document.getElementById('alumnoCarrera').value = '';
+    document.getElementById('alumnoSemestre').value = '';
+    document.getElementById('empleadoPuesto').value = '';
+    document.getElementById('campoExtraRol').value = '';
+    rolSeleccionado = null;
+    document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('camposRolAlumno').style.display = 'none';
+    document.getElementById('camposRolEmpleadoBase').style.display = 'none';
+
+    cambiarModoPersona('existente');
     cargarUsuariosSelect();
 
     if (modalRegistroInstance) {
         modalRegistroInstance.show();
     } else {
         console.error("El modal de registro no se inicializo correctamente.");
+    }
+}
+
+// Toggle entre "persona existente" y "persona nueva"
+function cambiarModoPersona(modo) {
+    modoPersonaActual = modo;
+    const esExistente = modo === 'existente';
+
+    document.getElementById('bloqueExistente').style.display = esExistente ? 'block' : 'none';
+    document.getElementById('bloqueNueva').style.display = esExistente ? 'none' : 'block';
+
+    document.getElementById('tabExistente').classList.toggle('active', esExistente);
+    document.getElementById('tabNueva').classList.toggle('active', !esExistente);
+}
+
+// Click en una tarjeta de rol
+function seleccionarRol(rol) {
+    rolSeleccionado = rol;
+
+    document.querySelectorAll('.role-card').forEach(c => {
+        c.classList.toggle('selected', c.getAttribute('data-rol') === rol);
+    });
+
+    const esAlumno = rol === 'Alumno';
+    document.getElementById('camposRolAlumno').style.display = esAlumno ? 'block' : 'none';
+    document.getElementById('camposRolEmpleadoBase').style.display = esAlumno ? 'none' : 'block';
+
+    if (!esAlumno) {
+        const cfg = CONFIG_ROL_EMPLEADO[rol];
+        const wrap = document.getElementById('campoExtraRolWrap');
+        if (cfg && cfg.campoExtra) {
+            wrap.style.display = 'block';
+            document.getElementById('campoExtraRolLabel').innerText = cfg.label;
+        } else {
+            wrap.style.display = 'none'; // "Empleado" generico no necesita campo extra
+        }
     }
 }
 
@@ -42,7 +103,7 @@ async function cargarEstadisticas() {
         const inactivos = total - activos;
 
         document.getElementById('totalTarjetas').innerText = total;
-        document.getElementById('tarjetasActivas').innerText = activos; // Personas activas en sistema
+        document.getElementById('tarjetasActivas').innerText = activos;
         document.getElementById('tarjetasInactivas').innerText = inactivos;
     } catch (err) {
         console.error("Error en estadísticas:", err.message);
@@ -64,8 +125,8 @@ async function cargarTablaTarjetas() {
         tbody.innerHTML = "";
 
         data.forEach(p => {
-            let badgeEstado = p.activo 
-                ? `<span class="badge-tipo badge-ok">Activo</span>` 
+            let badgeEstado = p.activo
+                ? `<span class="badge-tipo badge-ok">Activo</span>`
                 : `<span class="badge-tipo badge-deny">Inactivo</span>`;
 
             const tr = document.createElement('tr');
@@ -88,7 +149,7 @@ async function cargarTablaTarjetas() {
     }
 }
 
-// 3. LLENAR EL SELECT DEL MODAL
+// 3. LLENAR EL SELECT DEL MODAL (modo "persona existente")
 async function cargarUsuariosSelect() {
     try {
         const { data, error } = await supabase
@@ -101,10 +162,10 @@ async function cargarUsuariosSelect() {
         const select = document.getElementById('selectUsuarioRegistro');
         if (!select) return;
         select.innerHTML = '<option value="">— Selecciona una persona —</option>';
-        
+
         data.forEach(p => {
             const opt = document.createElement('option');
-            opt.value = p.id; // Almacena el ID numérico (serial)
+            opt.value = p.id;
             opt.text = `${p.nombre} ${p.apellido}`;
             select.appendChild(opt);
         });
@@ -113,26 +174,114 @@ async function cargarUsuariosSelect() {
     }
 }
 
-// 4. MODO REGISTRO USANDO TU TABLA 'registro_tarjeta_pendiente'
+// Busca el id del rol en la tabla "roles" por nombre (debe existir un registro con ese nombre)
+async function obtenerRolId(nombreRol) {
+    const { data, error } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('nombre', nombreRol)
+        .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error(`No existe el rol "${nombreRol}" en la tabla roles. Agrégalo primero.`);
+    return data.id;
+}
+
+// Crea la persona nueva + su subtabla de rol en cascada. Regresa el persona_id final.
+async function crearPersonaNuevaConRol() {
+    const nombre = document.getElementById('nuevoNombre').value.trim();
+    const apellido = document.getElementById('nuevoApellido').value.trim();
+
+    if (!nombre || !apellido) throw new Error("Nombre y apellido son obligatorios.");
+    if (!rolSeleccionado) throw new Error("Selecciona un tipo de persona (rol).");
+
+    const rolId = await obtenerRolId(rolSeleccionado);
+
+    // 1. Insert en personas
+    const { data: personaInsertada, error: errPersona } = await supabase
+        .from('personas')
+        .insert([{ nombre, apellido, rol_id: rolId, activo: true }])
+        .select('id')
+        .single();
+
+    if (errPersona) throw errPersona;
+    const personaId = personaInsertada.id;
+
+    if (rolSeleccionado === 'Alumno') {
+        const matricula = document.getElementById('alumnoMatricula').value.trim();
+        const carrera = document.getElementById('alumnoCarrera').value.trim();
+        const semestre = parseInt(document.getElementById('alumnoSemestre').value);
+
+        if (!matricula || !carrera || !semestre) {
+            throw new Error("Matrícula, carrera y semestre son obligatorios para Alumno.");
+        }
+
+        const { error: errEst } = await supabase
+            .from('estudiantes')
+            .insert([{ matricula, persona_id: personaId, carrera, semestre, estado: 'Activo' }]);
+
+        if (errEst) throw errEst;
+
+    } else {
+        // Cualquier otro rol pasa primero por "empleados"
+        const puesto = document.getElementById('empleadoPuesto').value.trim();
+        if (!puesto) throw new Error("El puesto es obligatorio.");
+
+        const { data: empleadoInsertado, error: errEmp } = await supabase
+            .from('empleados')
+            .insert([{ persona_id: personaId, puesto, estado: 'Activo' }])
+            .select('id')
+            .single();
+
+        if (errEmp) throw errEmp;
+        const empleadoId = empleadoInsertado.id;
+
+        const cfg = CONFIG_ROL_EMPLEADO[rolSeleccionado];
+        if (cfg && cfg.tabla) {
+            const valorExtra = document.getElementById('campoExtraRol').value.trim();
+            if (!valorExtra) throw new Error(`El campo "${cfg.label}" es obligatorio.`);
+
+            const filaExtra = { empleado_id: empleadoId, estado: 'Activo' };
+            filaExtra[cfg.campoExtra] = valorExtra;
+
+            const { error: errSub } = await supabase.from(cfg.tabla).insert([filaExtra]);
+            if (errSub) throw errSub;
+        }
+        // Si rolSeleccionado === 'Empleado' generico, no hay subtabla adicional, ya quedo en "empleados"
+    }
+
+    return personaId;
+}
+
+// 4. MODO REGISTRO: obtiene persona_id (existente o recien creada) y arranca el "modo escucha"
 async function iniciarModoRegistro() {
-    const personaId = document.getElementById('selectUsuarioRegistro').value;
-    if (!personaId) return alert("Por favor, selecciona una persona primero.");
+    let personaId;
+
+    try {
+        if (modoPersonaActual === 'existente') {
+            personaId = document.getElementById('selectUsuarioRegistro').value;
+            if (!personaId) return alert("Por favor, selecciona una persona primero.");
+        } else {
+            personaId = await crearPersonaNuevaConRol();
+        }
+    } catch (err) {
+        alert("Error al preparar el registro: " + err.message);
+        return;
+    }
 
     document.getElementById('pasoSeleccion').style.display = 'none';
     document.getElementById('pasoEsperando').style.display = 'block';
     document.getElementById('bannerRegistro').style.display = 'block';
 
     try {
-        
         const { error } = await supabase
             .from('registro_tarjeta_pendiente')
             .insert([{ persona_id: parseInt(personaId), activo: true }]);
 
         if (error) throw error;
 
-
+        // Simulación: El ESP32 lee la fila, procesa y apaga la bandera a los 4s
         setTimeout(async () => {
-        
             await supabase
                 .from('registro_tarjeta_pendiente')
                 .update({ activo: false })
@@ -141,7 +290,7 @@ async function iniciarModoRegistro() {
             document.getElementById('pasoEsperando').style.display = 'none';
             document.getElementById('pasoExito').style.display = 'block';
             document.getElementById('msgExitoRegistro').innerText = `Vinculado con éxito al ID Persona: ${personaId}`;
-            
+
             cargarEstadisticas();
             cargarTablaTarjetas();
             setTimeout(() => {
@@ -162,11 +311,11 @@ function cancelarModoRegistro() {
 }
 
 async function desactivarPersona(id) {
-    if(confirm("¿Seguro que deseas desactivar a esta persona?")) {
+    if (confirm("¿Seguro que deseas desactivar a esta persona?")) {
         const { error } = await supabase
             .from('personas')
             .update({ activo: false })
             .eq('id', id);
-        if(!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
+        if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
     }
 }
