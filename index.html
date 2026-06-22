@@ -12,48 +12,41 @@
 <body>
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4 header-bar pt-3">
-           <div class="header-brand">
-            
+            <div class="header-brand">
                 <div class="logo-container">
                     <img src="img/logo2.png" class="logo-img">
                 </div>
-            
                 <div class="logo-info">
-            
                     <h1 class="logo-title">
                         <span class="s">S</span><span class="c">C</span><span class="a">A</span>
                     </h1>
-            
                     <div class="subtitle">
                         Sistema de Control de Acceso
                     </div>
-            
                     <div class="university">
                         Universidad Alvart
                     </div>
-            
                 </div>
-            
             </div>
             
             <div class="d-flex align-items-center gap-2">
                 <span class="text-success me-2" style="font-size: 0.9rem;">● Activo</span>
                 
                 <a href="usuarios.html" class="btn btn-outline-secondary border-1 text-white" style="background:#1d4ed8">
-                <i class="bi bi-person-badge-fill"></i> Usuarios
+                    <i class="bi bi-person-badge-fill"></i> Usuarios
                 </a>
                 <a href="tarjeta.html" class="btn btn-outline-secondary border-1 text-white" style="background:#0e7490">
-                <i class="bi bi-credit-card-2-back-fill"></i> Tarjetas
+                    <i class="bi bi-credit-card-2-back-fill"></i> Tarjetas
                 </a>
                 <a href="historial.html" class="btn btn-outline-secondary border-1 text-white" style="background-color:#626265">
-                <i class="bi bi-clock-history"></i> Historial
+                    <i class="bi bi-clock-history"></i> Historial
                 </a>
                 <a href="facial.html" class="btn btn-outline-secondary border-1 text-white" style="background:#833df4">
-                <i class="bi bi-webcam"></i> Reconocimiento Facial
+                    <i class="bi bi-webcam"></i> Reconocimiento Facial
                 </a>
                 
-                <button class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalEmergencia" onclick="cargarCodigos()">
-                    🚨 MODO EMERGENCIA
+                <button class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#modalEmergencia">
+                     MODO EMERGENCIA
                 </button>
             </div>
         </div>
@@ -100,17 +93,17 @@
             <div class="col-md-8" >
                 <div class="card text-white p-3" style="background-color:#112266"`>
                     <h5>Registro en Tiempo Real</h5>
-                    <table class="table table-hover mb-0" style="background-color:#072497" >
+                    <table class="table table-hover mb-0" >
                         <thead>
                             <tr>
                                 <th>Nombre</th>
-                                <th>Tipo</th>
+                                <th class="text-white">Tipo</th>
                                 <th>Resultado</th>
                                 <th>Fecha / Hora</th>
                             </tr>
                         </thead>
                         <tbody id="tablaActividad">
-                            <tr><td colspan="4" class="text-center text-muted">🔄 Cargando flujo de datos...</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted"> Cargando flujo de datos...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -148,33 +141,33 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark text-white">
                 <div class="modal-header border-bottom border-secondary">
-                    <h5>🚨 Configuración de Emergencia</h5>
+                    <h5>Configuración de Emergencia</h5>
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold text-warning">Código de emergencia autorizado:</label>
-                        <select class="form-select" id="selectCodigo">
+                        <select class="form-select" id="selectCodigoEmergencia">
                             <option value="">-- Selecciona un código maestro --</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tipo de Acción:</label><br>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipoEmergencia" value="lockdown" id="teLockdown" checked>
-                            <label class="form-check-label" for="teLockdown">🔒 Lockdown (Cierre Total)</label>
+                            <input class="form-check-input" type="radio" name="tipoAccion" value="lockdown" id="teLockdown" checked>
+                            <label class="form-check-label" for="teLockdown"> Lockdown (Cierre Total)</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipoEmergencia" value="evacuacion" id="teEvacuacion">
-                            <label class="form-check-label" for="teEvacuacion">🚪 Evacuación (Apertura Total)</label>
+                            <input class="form-check-input" type="radio" name="tipoAccion" value="evacuacion" id="teEvacuacion">
+                            <label class="form-check-label" for="teEvacuacion"> Evacuación (Apertura Total)</label>
                         </div>
                     </div>
                     <div class="d-flex gap-2 pt-2">
-                        <button class="btn btn-danger flex-fill fw-bold py-2" onclick="activarEmergencia()">
-                            🚨 Activar Emergencia
+                        <button type="button" id="btnActivarEmergencia" class="btn btn-danger flex-fill fw-bold py-2">
+                             Activar Emergencia
                         </button>
-                        <button class="btn btn-secondary flex-fill fw-bold py-2" onclick="desactivarEmergencia()">
-                            ✅ Desactivar / Normalizar
+                        <button type="button" id="btnDesactivarEmergencia" class="btn btn-secondary flex-fill fw-bold py-2">
+                             Desactivar / Normalizar
                         </button>
                     </div>
                 </div>
@@ -183,15 +176,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="js/supabase-config.js"></script>
-    
-    <script src="js/index.js"></script>
-
-    
+    <script src="js/index.js?v=1.0.1"></script>
 
 </body>
-
 </html>
