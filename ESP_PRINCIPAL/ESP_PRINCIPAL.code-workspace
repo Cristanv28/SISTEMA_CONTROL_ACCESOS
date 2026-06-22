@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "Primer_LectorRC",
+			"path": "../Primer_LectorRC"
+		},
+		{
+			"name": "Segundo_LectorRC",
+			"path": "../Segundo_LectorRC"
+		}
+	],
+	"settings": {}
+}
