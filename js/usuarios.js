@@ -25,7 +25,7 @@ async function initUsuarios() {
        // const resDoc = await supabase.from('docentes').select('*');
 
         const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
-        const resAdm = await supabase.from('administrativos').select('id, area, estado, empleado_id, empleados(persona_id, personas(nombre, apellido))');
+        const resAdm = await supabase.from('administrativos').select('*');
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
@@ -115,8 +115,7 @@ function filtrarTablas() {
     const tAdm = document.getElementById('tablaAdministrativos');
     tAdm.innerHTML = "";
     listaAdministrativos.forEach(a => {
-        const pers = a.empleados?.personas;
-        const nombreCompleto = `${pers?.nombre || ''} ${pers?.apellido || ''}`;
+        const nombreCompleto = a.nombre || '';
         if (!nombreCompleto.toLowerCase().includes(busqueda)) return;
 
         const badgeClass = a.estado === 'Activo' ? 'bg-success' : 'bg-danger';
