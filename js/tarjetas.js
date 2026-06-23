@@ -381,7 +381,7 @@ async function activarPersona(id) {
     if (confirm("¿Deseas activar nuevamente a esta persona?")) {
         const { error } = await supabase
             .from('personas')
-            .update({ activo: false }) // Cambiar a true si el campo en DB requiere true
+            .update({ activo: true }) // Cambiar a true si el campo en DB requiere true
             .eq('id', id);
         if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
     }
