@@ -21,7 +21,7 @@ async function initUsuarios() {
 
         const resEst = await supabase.from('estudiantes').select('matricula, carrera, semestre, estado, persona_id, personas(nombre, apellido)');
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
-        const resDoc = await supabase.from('docentes').select('id, departamento, estado, empleados(persona_id, personas(nombre, apellido))');
+       // const resDoc = await supabase.from('docentes').select('*');
         const resAdm = await supabase.from('administrativos').select('id, area, estado, empleado_id, empleados(persona_id, personas(nombre, apellido))');
         console.log("EST", resEst);
         console.log("EMP", resEmp);
@@ -30,12 +30,12 @@ async function initUsuarios() {
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
-        if (resDoc.error) throw resDoc.error;
+        //if (resDoc.error) throw resDoc.error;
         if (resAdm.error) throw resAdm.error;
 
         listaEstudiantes = resEst.data || [];
         listaEmpleados = resEmp.data || [];
-        listaDocentes = resDoc.data || [];
+       // listaDocentes = resDoc.data || [];
         listaAdministrativos = resAdm.data || [];
 
         actualizarContadores();
@@ -99,8 +99,7 @@ function filtrarTablas() {
     const tDoc = document.getElementById('tablaDocentes');
     tDoc.innerHTML = "";
     listaDocentes.forEach(d => {
-        const pers = d.empleados?.personas;
-        const nombreCompleto = `${pers?.nombre || ''} ${pers?.apellido || ''}`;
+        const nombreCompleto = d.nombre || '';
         if (!nombreCompleto.toLowerCase().includes(busqueda)) return;
 
         const badgeClass = d.estado === 'Activo' ? 'bg-success' : 'bg-danger';
@@ -111,7 +110,7 @@ function filtrarTablas() {
                 <td>${d.departamento}</td>
                 <td><span class="badge ${badgeClass}">${d.estado}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionDocente('${d.id}', '${pers?.nombre}', '${pers?.apellido}', '${d.departamento}')">✏️ Editar</button>
+                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionDocente('${d.id}', '${d.nombre}', '', '${d.departamento}')"
                     <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('docentes', 'id', '${d.id}')">🗑️ Eliminar</button>
                 </td>
             </tr>`;
