@@ -27,6 +27,7 @@ async function initUsuarios() {
         console.log("EMP", resEmp);
         console.log("DOC", resDoc);
         console.log("ADM", resAdm);
+
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
         if (resDoc.error) throw resDoc.error;
