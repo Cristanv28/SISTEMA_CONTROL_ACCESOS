@@ -10,8 +10,8 @@
 </head>
 
 <body>
-    <div id="bannerRegistro" class="mb-4">
-        📡 MODO REGISTRO ACTIVO — Acerca la tarjeta al lector del ESP32
+    <div id="bannerRegistro" class="mb-4" style="display:none;">
+         MODO REGISTRO ACTIVO — Acerca la tarjeta al lector del ESP32
         <button class="cancel-btn" onclick="cancelarModoRegistro()">✕ Cancelar</button>
     </div>
 
@@ -60,7 +60,7 @@
                     <input class="form-input-custom" id="busquedaTarjeta" placeholder="🔍 Buscar por nombre o matrícula..." oninput="filtrarTarjetas()">
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select-custom" id="filtroTipo" onchange="filtrarTarjetas()">
+                    <select class="form-select-custom" id="filtroTipo" p-dark onchange="filtrarTarjetas()">
                         <option value="">Todos los tipos</option>
                         <option value="alumno">Estudiantes</option>
                         <option value="administrativo">Administrativos</option>
@@ -102,50 +102,144 @@
             </div>
         </div>
     </div>
-
     <div class="modal fade modal-custom" id="modalRegistro" tabindex="-1" aria-labelledby="modalRegistroLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalRegistroLabel">📡 Registrar Tarjeta NFC</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="pasoSeleccion" class="card-form-grid">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalRegistroLabel">📡 Registrar Tarjeta NFC</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+ 
+                <div id="pasoSeleccion" class="card-form-grid">
+ 
+                    <!-- Toggle: persona existente / persona nueva -->
+                    <ul class="nav nav-pills mb-3" id="tabsPersona">
+                        <li class="nav-item">
+                            <button class="nav-link active" type="button" onclick="cambiarModoPersona('existente')" id="tabExistente">Persona existente</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" type="button" onclick="cambiarModoPersona('nueva')" id="tabNueva">Persona nueva</button>
+                        </li>
+                    </ul>
+ 
+                    <!-- ===== MODO: PERSONA EXISTENTE ===== -->
+                    <div id="bloqueExistente">
                         <p style="color: var(--muted); font-size:.85rem;" class="mb-2">
-                            Selecciona el usuario al que deseas asignar una tarjeta NFC. Después activa el modo registro y acerca la tarjeta al lector.
+                            Selecciona el usuario al que deseas asignar una tarjeta NFC.
                         </p>
-                        <div>
-                            <label class="form-label-custom">Usuario</label>
-                            <select class="form-select-custom" id="selectUsuarioRegistro">
-                                <option value="">— Cargando usuarios... —</option>
-                            </select>
+                        <label class="form-label-custom">Usuario</label>
+                        <select class="form-select-custom" id="selectUsuarioRegistro">
+                            <option value="">— Cargando usuarios... —</option>
+                        </select>
+                    </div>
+ 
+                    <!-- ===== MODO: PERSONA NUEVA ===== -->
+                    <div id="bloqueNueva" style="display:none;">
+                        <p style="color: var(--muted); font-size:.85rem;" class="mb-3">
+                            Da de alta a la persona y luego acerca la tarjeta al lector.
+                        </p>
+ 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Nombre(s)</label>
+                                <input type="text" class="form-input-custom" id="nuevoNombre" placeholder="Ej. Juan">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Apellido(s)</label>
+                                <input type="text" class="form-input-custom" id="nuevoApellido" placeholder="Ej. Pérez Gómez">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Correo institucional</label>
+                                <input type="email" class="form-input-custom" id="nuevoCorreo" placeholder="opcional">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Teléfono</label>
+                                <input type="text" class="form-input-custom" id="nuevoTelefono" placeholder="opcional">
+                            </div>
                         </div>
-                        <div class="small mono-text" id="infoUsuarioSeleccionado"></div>
-                    </div>
-                    
-                    <div id="pasoEsperando" style="display:none; text-align:center; padding: 1.5rem 0;">
-                        <div class="spinner-border text-primary mb-3" role="status"></div>
-                        <p class="fw-bold">Esperando tarjeta...</p>
-                        <p style="color: var(--muted);" class="small">Acerca la tarjeta NFC al lector del ESP32.<br>El registro se completará automáticamente.</p>
-                    </div>
-                    
-                    <div id="pasoExito" style="display:none; text-align:center; padding: 1rem 0;">
-                        <div style="font-size: 3rem; margin-bottom: .5rem;">✅</div>
-                        <p class="fw-bold fs-5" style="color: var(--success);">¡Tarjeta Registrada!</p>
-                        <p style="color: var(--muted);" class="small" id="msgExitoRegistro">—</p>
+ 
+                        <label class="form-label-custom mb-2">Tipo de persona</label>
+                        <div class="role-card-grid mb-3" id="roleCardGrid">
+                            <div class="role-card" data-rol="Alumno" onclick="seleccionarRol('Alumno')">
+                                <i class="bi bi-mortarboard-fill"></i><span>Alumno</span>
+                            </div>
+                            <div class="role-card" data-rol="Docente" onclick="seleccionarRol('Docente')">
+                                <i class="bi bi-easel-fill"></i><span>Docente</span>
+                            </div>
+                            <div class="role-card" data-rol="Empleado" onclick="seleccionarRol('Empleado')">
+                                <i class="bi bi-person-badge-fill"></i><span>Empleado</span>
+                            </div>
+                            <div class="role-card" data-rol="Administrativo" onclick="seleccionarRol('Administrativo')">
+                                <i class="bi bi-folder-fill"></i><span>Administrativo</span>
+                            </div>
+                            <div class="role-card" data-rol="Director" onclick="seleccionarRol('Director')">
+                                <i class="bi bi-building-fill"></i><span>Director</span>
+                            </div>
+                            <div class="role-card" data-rol="Coordinador" onclick="seleccionarRol('Coordinador')">
+                                <i class="bi bi-diagram-3-fill"></i><span>Coordinador</span>
+                            </div>
+                        </div>
+ 
+                        <!-- Campos dinamicos segun el rol elegido -->
+                        <div id="camposRolAlumno" class="campos-rol" style="display:none;">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label-custom">Matrícula</label>
+                                    <input type="text" class="form-input-custom" id="alumnoMatricula">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label-custom">Carrera</label>
+                                    <input type="text" class="form-input-custom" id="alumnoCarrera">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label-custom">Semestre</label>
+                                    <input type="number" min="1" max="12" class="form-input-custom" id="alumnoSemestre">
+                                </div>
+                            </div>
+                        </div>
+ 
+                        <div id="camposRolEmpleadoBase" class="campos-rol" style="display:none;">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label-custom">Puesto</label>
+                                    <input type="text" class="form-input-custom" id="empleadoPuesto">
+                                </div>
+                                <div class="col-md-6" id="campoExtraRolWrap" style="display:none;">
+                                    <label class="form-label-custom" id="campoExtraRolLabel">—</label>
+                                    <input type="text" class="form-input-custom" id="campoExtraRol">
+                                </div>
+                            </div>
+                        </div>
+ 
+                        <div class="small mono-text mt-2" id="infoUsuarioSeleccionado"></div>
                     </div>
                 </div>
-                <div class="modal-footer modal-btns">
-                    <button type="button" class="btn-modal-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn-modal-primary" onclick="iniciarModoRegistro()">
-                        📡 Activar Modo Registro
-                    </button>
+ 
+                <div id="pasoEsperando" style="display:none; text-align:center; padding: 1.5rem 0;">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p class="fw-bold">Esperando tarjeta...</p>
+                    <p style="color: var(--muted);" class="small">Acerca la tarjeta NFC al lector del ESP32.<br>El registro se completará automáticamente.</p>
                 </div>
+ 
+                <div id="pasoExito" style="display:none; text-align:center; padding: 1rem 0;">
+                    <div style="font-size: 3rem; margin-bottom: .5rem;">✅</div>
+                    <p class="fw-bold fs-5" style="color: var(--success);">¡Tarjeta Registrada!</p>
+                    <p style="color: var(--muted);" class="small" id="msgExitoRegistro">—</p>
+                </div>
+            </div>
+            <div class="modal-footer modal-btns">
+                <button type="button" class="btn-modal-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-modal-primary" onclick="iniciarModoRegistro()">
+                    📡 Activar Modo Registro
+                </button>
             </div>
         </div>
     </div>
+</div>
 
+    
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -1,5 +1,5 @@
     :root {
-        --bg:#0d1b4b ; --surface:#13161e; --surface2:#1a1e2a; --border:#242837;
+        --bg:#0d1b4b ; --surface:#112266; --surface2:#1a1e2a; --border:#242837;
         --accent:#4f8ef7; --accent2:#7c6df9; --success:#34d399; --danger:#f87171;
         --warning:#fbbf24; --face:#a78bfa; --text:#e2e8f0; --muted:#64748b;
         --mono:'JetBrains Mono',monospace; --sans:'Inter',sans-serif;
@@ -9,14 +9,14 @@
         /* HEADER */
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border);}
         .header-brand{display:flex;align-items:center;gap:14px;}
-        .logo-img{width:150px;height:150px;object-fit:contain;}
+       
         .brand-title{font-size:1.1rem;font-weight:600;color:var(--text);}
         .brand-sub{font-size:0.78rem;color:var(--muted);margin-top:2px;}
         .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);margin-right:6px;animation:pulse 2s infinite;}
         @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
         .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
         /* BUTTONS */
-        .btn-ghost{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:0.82rem;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:var(--sans);text-decoration:none;display:inline-block;}
+        .btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:0.82rem;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:var(--sans);text-decoration:none;display:inline-block;}
         .btn-ghost:hover{background:var(--border);color:rgb(255, 255, 255);}
         .btn-danger-custom{background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:var(--danger);font-size:0.82rem;padding:7px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:var(--sans);}
         .btn-danger-custom:hover{background:rgba(248,113,113,0.22);}
@@ -142,3 +142,140 @@
         font-size: 18px;
         letter-spacing: 0.02em;
     }
+
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:28px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+}
+
+.header-brand{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.logo-container{
+    width:85px;
+    height:85px;
+    border-radius:50%;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-shrink:0;
+    background:#fff;
+    border:2px solid rgba(255, 255, 255, 0.15);
+    box-shadow:0 5px 18px rgba(0,0,0,.30);
+}
+
+.logo-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:50%;
+}
+
+.logo-info{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+.logo-title{
+    font-family:'Poppins',sans-serif;
+    font-size:52px;
+    font-weight:800;
+    line-height:1;
+    letter-spacing:2px;
+    margin:0;
+    text-transform:uppercase;
+    text-shadow:0 3px 8px rgba(0,0,0,.25);
+}
+
+.logo-title .s,
+.logo-title .c{
+    color:#fff;
+}
+
+.logo-title .a{
+    background:linear-gradient(180deg,#74BFFF,#1F63E7);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+    margin-top:6px;
+    color:#fff;
+    font-size:18px;
+    font-weight:600;
+    line-height:1.2;
+    letter-spacing:.5px;
+}
+
+.university{
+    margin-top:8px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    color:#4D8EFF;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+
+.university::before,
+.university::after{
+    content:"";
+    width:60px;
+    height:3px;
+    border-radius:20px;
+    flex-shrink:0;
+}
+
+.university::before{
+    background:#2F7BFF;
+}
+
+.university::after{
+    background:#E53935;
+}
+
+@media(max-width:900px){
+
+    .header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
+
+    .header-brand{
+        width:100%;
+    }
+
+    .logo-title{
+        font-size:42px;
+    }
+
+    .subtitle{
+        font-size:16px;
+    }
+
+    .university{
+        font-size:13px;
+        letter-spacing:2px;
+    }
+
+    .university::before,
+    .university::after{
+        width:35px;
+    }
+    
+}
+
