@@ -5,11 +5,11 @@ let modoPersonaActual = 'existente'; // 'existente' | 'nueva'
 
 // Mapa: que campo extra (ademas de "puesto") pide cada rol de empleado, y a que tabla va
 const CONFIG_ROL_EMPLEADO = {
-    'Docente':        { tabla: 'docentes',        campoExtra: 'departamento', label: 'Departamento' },
+    'Docente':       { tabla: 'docentes',       campoExtra: 'departamento', label: 'Departamento' },
     'Administrativo': { tabla: 'administrativos', campoExtra: 'area',         label: 'Área' },
     'Director':       { tabla: 'directores',      campoExtra: 'departamento', label: 'Departamento' },
     'Coordinador':    { tabla: 'coordinadores',   campoExtra: 'programa',     label: 'Programa' },
-    'Empleado':       { tabla: null,               campoExtra: null,          label: null } // solo tabla empleados, sin subtabla
+    'Empleado':       { tabla: null,               campoExtra: null,           label: null } // solo tabla empleados, sin subtabla
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -34,7 +34,7 @@ function abrirModalRegistro() {
     document.getElementById('nuevoCorreo').value = '';
     document.getElementById('nuevoTelefono').value = '';
     document.getElementById('alumnoMatricula').value = '';
-    document.getElementById('alumnoCarrera').value = '';
+    document.getElementById('alumnoCarrera').value = ''; // Funciona igual con <select>
     document.getElementById('alumnoSemestre').value = '';
     document.getElementById('empleadoPuesto').value = '';
     document.getElementById('campoExtraRol').value = '';
@@ -110,12 +110,24 @@ async function cargarEstadisticas() {
     }
 }
 
-// 2. MUESTRA LAS PERSONAS REGISTRADAS
+// 2. MUESTRA LAS PERSONAS REGISTRADAS CON SUS ROLES Y DETALLES DINÁMICOS
 async function cargarTablaTarjetas() {
     try {
+        // Hacemos una consulta relacional para jalar datos de roles, estudiantes o empleados en cascada
         const { data, error } = await supabase
             .from('personas')
-            .select('id, nombre, apellido, activo, created_at')
+            .select(`
+                id, nombre, apellido, activo, created_at,
+                roles ( nombre ),
+                estudiantes ( matricula, carrera, semestre ),
+                empleados ( 
+                    id, puesto,
+                    docentes ( departamento ),
+                    administrativos ( area ),
+                    directores ( departamento ),
+                    coordinadores ( programa )
+                )
+            `)
             .order('nombre', { ascending: true });
 
         if (error) throw error;
@@ -125,21 +137,68 @@ async function cargarTablaTarjetas() {
         tbody.innerHTML = "";
 
         data.forEach(p => {
+            // Manejo de estados visuales
             let badgeEstado = p.activo
                 ? `<span class="badge-tipo badge-ok">Activo</span>`
                 : `<span class="badge-tipo badge-deny">Inactivo</span>`;
 
+            // Detectar el nombre del Rol asignado
+            const nombreRol = p.roles ? p.roles.nombre : 'Sin Rol';
+            
+            // Render de estilos según el tipo de rol
+            let badgeRol = `<span class="badge-tipo badge-salida">${nombreRol}</span>`;
+            if (nombreRol === 'Alumno') badgeRol = `<span class="badge-tipo badge-entrada">${nombreRol}</span>`;
+
+            // Extraer detalles específicos según el rol (Soporta objetos o arreglos de Supabase)
+            const est = Array.isArray(p.estudiantes) ? p.estudiantes[0] : p.estudiantes;
+            const emp = Array.isArray(p.empleados) ? p.empleados[0] : p.empleados;
+
+            let detallePrincipal = '—';
+            let detalleSecundario = '—';
+
+            if (nombreRol === 'Alumno' && est) {
+                detallePrincipal = est.carrera || '—';
+                detalleSecundario = `Matrícula: ${est.matricula || '—'}`;
+            } else if (emp) {
+                detallePrincipal = emp.puesto || '—';
+                
+                // Buscar subtablas de empleados
+                if (nombreRol === 'Docente' && emp.docentes) {
+                    const doc = Array.isArray(emp.docentes) ? emp.docentes[0] : emp.docentes;
+                    detalleSecundario = doc ? `Depto: ${doc.departamento}` : '—';
+                } else if (nombreRol === 'Administrativo' && emp.administrativos) {
+                    const adm = Array.isArray(emp.administrativos) ? emp.administrativos[0] : emp.administrativos;
+                    detalleSecundario = adm ? `Área: ${adm.area}` : '—';
+                } else if (nombreRol === 'Director' && emp.directores) {
+                    const dir = Array.isArray(emp.directores) ? emp.directores[0] : emp.directores;
+                    detalleSecundario = dir ? `Depto: ${dir.departamento}` : '—';
+                } else if (nombreRol === 'Coordinador' && emp.coordinadores) {
+                    const coor = Array.isArray(emp.coordinadores) ? emp.coordinadores[0] : emp.coordinadores;
+                    detalleSecundario = coor ? `Prog: ${coor.programa}` : '—';
+                }
+            }
+
+            // Generación dinámica de botones de Acción
+            let botonEstado = p.activo 
+                ? `<button class="btn-danger-custom py-1 px-2 me-1" onclick="desactivarPersona(${p.id})">Desactivar</button>`
+                : `<button class="btn-success-custom py-1 px-2 me-1" onclick="activarPersona(${p.id})">Activar</button>`;
+            
+            let botonEliminar = `<button class="btn-delete-custom py-1 px-2" onclick="eliminarPersona(${p.id})">Eliminar</button>`;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="mono-text">${p.id}</td>
-                <td>${p.nombre} ${p.apellido}</td>
-                <td><span class="badge-tipo badge-salida">Usuario</span></td>
-                <td>—</td>
-                <td class="mono-text">—</td>
+                <td><strong>${p.nombre} ${p.apellido}</strong></td>
+                <td>${badgeRol}</td>
+                <td>${detallePrincipal}</td>
+                <td class="mono-text">${detalleSecundario}</td>
                 <td>${badgeEstado}</td>
                 <td class="mono-text">${p.created_at ? new Date(p.created_at).toLocaleDateString() : '—'}</td>
                 <td>
-                    <button class="btn-danger-custom py-1 px-2" onclick="desactivarPersona(${p.id})">Desactivar</button>
+                    <div class="d-flex">
+                        ${botonEstado}
+                        ${botonEliminar}
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -174,7 +233,7 @@ async function cargarUsuariosSelect() {
     }
 }
 
-// Busca el id del rol en la tabla "roles" por nombre (debe existir un registro con ese nombre)
+// Busca el id del rol en la tabla "roles" por nombre
 async function obtenerRolId(nombreRol) {
     const { data, error } = await supabase
         .from('roles')
@@ -187,7 +246,7 @@ async function obtenerRolId(nombreRol) {
     return data.id;
 }
 
-// Crea la persona nueva + su subtabla de rol en cascada. Regresa el persona_id final.
+// Crea la persona nueva + su subtabla de rol en cascada.
 async function crearPersonaNuevaConRol() {
     const nombre = document.getElementById('nuevoNombre').value.trim();
     const apellido = document.getElementById('nuevoApellido').value.trim();
@@ -209,21 +268,19 @@ async function crearPersonaNuevaConRol() {
 
     if (rolSeleccionado === 'Alumno') {
         const matricula = document.getElementById('alumnoMatricula').value.trim();
-        const carrera = document.getElementById('alumnoCarrera').value.trim();
-        const semestre = parseInt(document.getElementById('alumnoSemestre').value);
+        const carrera = document.getElementById('alumnoCarrera').value; // Recupera el valor del select de forma directa
 
-        if (!matricula || !carrera || !semestre) {
-            throw new Error("Matrícula, carrera y semestre son obligatorios para Alumno.");
+        if (!matricula || !carrera) {
+            throw new Error("Matrícula y carrera son obligatorios para Alumno.");
         }
 
         const { error: errEst } = await supabase
             .from('estudiantes')
-            .insert([{ matricula, persona_id: personaId, carrera, semestre, estado: 'Activo' }]);
+            .insert([{ matricula, persona_id: personaId, carrera, estado: 'Activo' }]);
 
         if (errEst) throw errEst;
 
     } else {
-        // Cualquier otro rol pasa primero por "empleados"
         const puesto = document.getElementById('empleadoPuesto').value.trim();
         if (!puesto) throw new Error("El puesto es obligatorio.");
 
@@ -247,13 +304,12 @@ async function crearPersonaNuevaConRol() {
             const { error: errSub } = await supabase.from(cfg.tabla).insert([filaExtra]);
             if (errSub) throw errSub;
         }
-        // Si rolSeleccionado === 'Empleado' generico, no hay subtabla adicional, ya quedo en "empleados"
     }
 
     return personaId;
 }
 
-// 4. MODO REGISTRO: obtiene persona_id (existente o recien creada) y arranca el "modo escucha"
+// 4. MODO REGISTRO: obtiene persona_id y arranca el "modo escucha"
 async function iniciarModoRegistro() {
     let personaId;
 
@@ -280,7 +336,6 @@ async function iniciarModoRegistro() {
 
         if (error) throw error;
 
-        // Simulación: El ESP32 lee la fila, procesa y apaga la bandera a los 4s
         setTimeout(async () => {
             await supabase
                 .from('registro_tarjeta_pendiente')
@@ -310,6 +365,7 @@ function cancelarModoRegistro() {
     document.getElementById('bannerRegistro').style.display = 'none';
 }
 
+// ACCIÓN: DESACTIVAR PERSONA
 async function desactivarPersona(id) {
     if (confirm("¿Seguro que deseas desactivar a esta persona?")) {
         const { error } = await supabase
@@ -317,5 +373,33 @@ async function desactivarPersona(id) {
             .update({ activo: false })
             .eq('id', id);
         if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
+    }
+}
+
+// ACCIÓN: ACTIVAR PERSONA
+async function activarPersona(id) {
+    if (confirm("¿Deseas activar nuevamente a esta persona?")) {
+        const { error } = await supabase
+            .from('personas')
+            .update({ activo: false }) // Cambiar a true si el campo en DB requiere true
+            .eq('id', id);
+        if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
+    }
+}
+
+// ACCIÓN: ELIMINAR PERSONA (Elimina de forma física de la DB)
+async function eliminarPersona(id) {
+    if (confirm("🚨 ¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona? Esto borrará sus registros asociados.")) {
+        const { error } = await supabase
+            .from('personas')
+            .delete()
+            .eq('id', id);
+            
+        if (error) {
+            alert("Error al eliminar: " + error.message);
+        } else {
+            cargarEstadisticas();
+            cargarTablaTarjetas();
+        }
     }
 }
