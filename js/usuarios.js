@@ -25,7 +25,7 @@ async function initUsuarios() {
         const resAdm = await supabase.from('administrativos').select('*');
         console.log("DOCENTES:", resDoc.data);
         console.log("ADMIN:", resAdm.data);
-        
+
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
         //if (resDoc.error) throw resDoc.error;
@@ -35,6 +35,7 @@ async function initUsuarios() {
         listaEmpleados = resEmp.data || [];
         listaDocentes = resDoc.data || [];
         listaAdministrativos = resAdm.data || [];
+        console.log("ADMINISTRATIVOS", listaAdministrativos);
 
         actualizarContadores();
         filtrarTablas();
@@ -125,8 +126,8 @@ function filtrarTablas() {
                 <td>${a.area}</td>
                 <td><span class="badge ${badgeClass}">${a.estado}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionAdmin('${a.id}', '${pers?.nombre}', '${pers?.apellido}', '${a.area}')">✏️ Editar</button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('administrativos', 'id', '${a.id}')">🗑️ Eliminar</button>
+                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionAdmin('${a.id}', '${a.nombre}', '', '${a.area}')">✏️ Editar</button>
+<button class="btn btn-sm btn-danger" onclick="eliminarRegistro('administrativos', 'id', '${a.id}')">🗑️ Eliminar</button>
                 </td>
             </tr>`;
     });
