@@ -1,7 +1,3 @@
-// ====================================================================
-//                            js/index.js
-// ====================================================================
-
 const dbClient = window.supabase; // Cliente global de Supabase
 let modalEmergenciaInstance;
 
@@ -30,6 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarMonitoreoTiempoReal();
     verificarEmergenciasActivas();
 
+    setInterval(() => {
+    cargarContadoresGlobales();
+    cargarMonitoreoTiempoReal();
+}, 3000);
+
     // Evento visual: Cambia el borde del select según el color del código seleccionado
     const selectCodigoEl = document.getElementById('selectCodigoEmergencia');
     if (selectCodigoEl) {
@@ -55,10 +56,17 @@ async function cargarContadoresGlobales() {
 
         // A. Entradas de hoy
         const { count: entradasHoy, error: errEnt } = await dbClient
-            .from('entradas_salidas')
-            .select('*', { count: 'exact', head: true })
-            .eq('fecha', hoyStr)
-            .eq('tipo', 'Entrada');
+    .from('entradas_salidas')
+    .select('*', { count: 'exact', head: true })
+    .eq('fecha', hoyStr)
+    .eq('tipo', 'Entrada');
+
+    // B. Salidas de hoy
+const { count: salidasHoy, error: errSal } = await dbClient
+    .from('entradas_salidas')
+    .select('*', { count: 'exact', head: true })
+    .eq('fecha', hoyStr)
+    .eq('tipo', 'Salida');
 
         // B. Intentos denegados de hoy
         const { count: denegadosHoy, error: errDen } = await dbClient
@@ -77,6 +85,7 @@ async function cargarContadoresGlobales() {
 
         // Inyectar valores de forma segura en el DOM
         if (!errEnt && document.getElementById('accesos_hoy')) document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
+        if (!errSal && document.getElementById('salidas_hoy')) document.getElementById('salidas_hoy').innerText = salidasHoy || 0;
         if (!errDen && document.getElementById('denegados_hoy')) document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
         if (!errEst && document.getElementById('statEstudiantes')) document.getElementById('statEstudiantes').innerText = estActivos || 0;
         if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
@@ -92,10 +101,16 @@ async function cargarContadoresGlobales() {
 async function cargarMonitoreoTiempoReal() {
     try {
         const { data, error } = await dbClient
-            .from('entradas_salidas')
-            .select('*')
-            .order('fecha_registro', { ascending: false })
-            .limit(8);
+    .from('entradas_salidas')
+    .select(`
+        *,
+        personas (
+            nombre,
+            apellido
+        )
+    `)
+    .order('fecha_registro', { ascending: false })
+    .limit(8);
 
         if (error) throw error;
 
@@ -109,7 +124,7 @@ async function cargarMonitoreoTiempoReal() {
         }
 
         data.forEach(reg => {
-            const nombre = reg.nombre ? `${reg.nombre} ${reg.apellido || ''}` : `Usuario #${reg.id_usuario || 'Anon'}`;
+            const nombre = reg.personas? `${reg.personas.nombre} ${reg.personas.apellido}`: `Usuario #${reg.persona_id}`;
             const badgeTipo = reg.tipo === 'Entrada' 
                 ? `<span class="badge bg-success-subtle text-success text-uppercase">Entrada</span>`
                 : `<span class="badge bg-primary-subtle text-primary text-uppercase">Salida</span>`;
@@ -345,3 +360,24 @@ esp32Socket.onmessage = (event) => {
 esp32Socket.onerror = (error) => {
     console.error("Error en el socket del ESP32:", error);
 };
+
+
+// ===============================
+// REALTIME SUPABASE (NO MODIFICA NADA)
+// ===============================
+
+dbClient
+.channel('realtime-entradas-salidas')
+.on(
+    'postgres_changes',
+    {
+        event: '*',
+        schema: 'public',
+        table: 'entradas_salidas'
+    },
+    () => {
+        cargarContadoresGlobales();
+        cargarMonitoreoTiempoReal();
+    }
+)
+.subscribe();
