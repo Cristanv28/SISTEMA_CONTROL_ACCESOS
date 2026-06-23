@@ -21,12 +21,11 @@ async function initUsuarios() {
 
         const resEst = await supabase.from('estudiantes').select('matricula, carrera, semestre, estado, persona_id, personas(nombre, apellido)');
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
+
        // const resDoc = await supabase.from('docentes').select('*');
+
+        const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
         const resAdm = await supabase.from('administrativos').select('id, area, estado, empleado_id, empleados(persona_id, personas(nombre, apellido))');
-        console.log("EST", resEst);
-        console.log("EMP", resEmp);
-        console.log("DOC", resDoc);
-        console.log("ADM", resAdm);
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
@@ -41,16 +40,12 @@ async function initUsuarios() {
         actualizarContadores();
         filtrarTablas();
 
- } catch (err) {
-    console.error(err);
+    } catch (err) {
+        console.error("Error al inicializar usuarios:", err.message);
+        alert("Error de sincronización con la base de datos: " + err.message);
+    }
+}
 
-    alert(
-        "MENSAJE: " + err.message +
-        "\nDETALLE: " + (err.details || "Sin detalle") +
-        "\nCODIGO: " + (err.code || "Sin código")
-    );
-}
-}
 /**
  * 2. ESTADÍSTICAS EN TIEMPO REAL
  */

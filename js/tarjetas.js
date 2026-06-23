@@ -381,7 +381,7 @@ async function activarPersona(id) {
     if (confirm("¿Deseas activar nuevamente a esta persona?")) {
         const { error } = await supabase
             .from('personas')
-            .update({ activo: true }) // Cambiar a true si el campo en DB requiere true
+            .update({ activo: false }) // Cambiar a true si el campo en DB requiere true
             .eq('id', id);
         if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
     }
@@ -402,32 +402,4 @@ async function eliminarPersona(id) {
             cargarTablaTarjetas();
         }
     }
-}
-// 5. FILTRAR TARJETAS EN LA TABLA (Por Rol o Estado)
-function filtrarTarjetas(valorFiltro) {
- 
-    if (!valorFiltro) {
-        const select = document.querySelector('select[onchange*="filtrarTarjetas"]');
-        valorFiltro = select ? select.value : '';
-    }
-
-    const filtro = valorFiltro.toLowerCase().trim();
-    const filas = document.querySelectorAll('#tablaTarjetas tr');
-
-    filas.forEach(tr => {
-     
-        if (!filtro || filtro === 'todos' || filtro === '') {
-            tr.style.display = '';
-            return;
-        }
-
-        const textoRol = tr.cells[2] ? tr.cells[2].innerText.toLowerCase() : '';
-        const textoEstado = tr.cells[5] ? tr.cells[5].innerText.toLowerCase() : '';
-
-        if (textoRol.includes(filtro) || textoEstado.includes(filtro)) {
-            tr.style.display = '';
-        } else {
-            tr.style.display = 'none';
-        }
-    });
 }
