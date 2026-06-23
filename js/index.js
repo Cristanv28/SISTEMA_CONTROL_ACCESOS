@@ -61,6 +61,13 @@ async function cargarContadoresGlobales() {
     .eq('fecha', hoyStr)
     .eq('tipo', 'Entrada');
 
+    // B. Salidas de hoy
+const { count: salidasHoy, error: errSal } = await dbClient
+    .from('entradas_salidas')
+    .select('*', { count: 'exact', head: true })
+    .eq('fecha', hoyStr)
+    .eq('tipo', 'Salida');
+
         // B. Intentos denegados de hoy
         const { count: denegadosHoy, error: errDen } = await dbClient
             .from('accesos_denegados')
@@ -78,6 +85,7 @@ async function cargarContadoresGlobales() {
 
         // Inyectar valores de forma segura en el DOM
         if (!errEnt && document.getElementById('accesos_hoy')) document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
+        if (!errSal && document.getElementById('salidas_hoy')) document.getElementById('salidas_hoy').innerText = salidasHoy || 0;
         if (!errDen && document.getElementById('denegados_hoy')) document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
         if (!errEst && document.getElementById('statEstudiantes')) document.getElementById('statEstudiantes').innerText = estActivos || 0;
         if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
