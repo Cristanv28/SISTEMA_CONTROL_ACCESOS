@@ -27,7 +27,6 @@ async function initUsuarios() {
         console.log("EMP", resEmp);
         console.log("DOC", resDoc);
         console.log("ADM", resAdm);
-        
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
         if (resDoc.error) throw resDoc.error;
@@ -41,12 +40,16 @@ async function initUsuarios() {
         actualizarContadores();
         filtrarTablas();
 
-    } catch (err) {
-        console.error("Error al inicializar usuarios:", err.message);
-        alert("Error de sincronización con la base de datos: " + err.message);
-    }
-}
+ } catch (err) {
+    console.error(err);
 
+    alert(
+        "MENSAJE: " + err.message +
+        "\nDETALLE: " + (err.details || "Sin detalle") +
+        "\nCODIGO: " + (err.code || "Sin código")
+    );
+}
+}
 /**
  * 2. ESTADÍSTICAS EN TIEMPO REAL
  */
