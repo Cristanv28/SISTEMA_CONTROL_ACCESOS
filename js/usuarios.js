@@ -23,8 +23,8 @@ async function initUsuarios() {
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
         const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
         const resAdm = await supabase.from('administrativos').select('*');
-        console.log("DOCENTES:", resDoc.data);
-        console.log("ADMIN:", resAdm.data);
+       console.log("ADMINISTRATIVOS:", resAdm);
+       console.log("ADMINISTRATIVOS DATA:", resAdm.data);
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
