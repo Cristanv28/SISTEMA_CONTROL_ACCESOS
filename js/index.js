@@ -26,6 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarMonitoreoTiempoReal();
     verificarEmergenciasActivas();
 
+    setInterval(() => {
+    cargarContadoresGlobales();
+    cargarMonitoreoTiempoReal();
+}, 3000);
+
     // Evento visual: Cambia el borde del select según el color del código seleccionado
     const selectCodigoEl = document.getElementById('selectCodigoEmergencia');
     if (selectCodigoEl) {
@@ -94,10 +99,16 @@ async function cargarContadoresGlobales() {
 async function cargarMonitoreoTiempoReal() {
     try {
         const { data, error } = await dbClient
-            .from('entradas_salidas')
-            .select('*')
-            .order('fecha_registro', { ascending: false })
-            .limit(8);
+    .from('entradas_salidas')
+    .select(`
+        *,
+        personas (
+            nombre,
+            apellido
+        )
+    `)
+    .order('fecha_registro', { ascending: false })
+    .limit(8);
 
         if (error) throw error;
 
