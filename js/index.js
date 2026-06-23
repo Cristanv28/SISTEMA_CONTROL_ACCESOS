@@ -83,12 +83,24 @@ const { count: salidasHoy, error: errSal } = await dbClient
             .from('docentes')
             .select('*', { count: 'exact', head: true });
 
+            // E. Administrativos Activos
+        const { count: adminActivos, error: errAdmin } = await dbClient
+        .from('administrativos')
+        .select('*', { count: 'exact', head: true });
+
+        // F. Empleados Activos
+         const { count: empleadosActivos, error: errEmp } = await dbClient
+        .from('empleados')
+        .select('*', { count: 'exact', head: true });
+
         // Inyectar valores de forma segura en el DOM
         if (!errEnt && document.getElementById('accesos_hoy')) document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
         if (!errSal && document.getElementById('salidas_hoy')) document.getElementById('salidas_hoy').innerText = salidasHoy || 0;
         if (!errDen && document.getElementById('denegados_hoy')) document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
         if (!errEst && document.getElementById('statEstudiantes')) document.getElementById('statEstudiantes').innerText = estActivos || 0;
         if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
+        if (!errAdmin && document.getElementById('statAdministrativos'))document.getElementById('statAdministrativos').innerText = adminActivos || 0;
+        if (!errEmp && document.getElementById('statEmpleados')) document.getElementById('statEmpleados').innerText = empleadosActivos || 0;
 
     } catch (err) {
         console.error("Error al cargar contadores globales:", err.message);
