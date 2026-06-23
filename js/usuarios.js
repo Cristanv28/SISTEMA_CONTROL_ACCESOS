@@ -21,7 +21,7 @@ async function initUsuarios() {
 
         const resEst = await supabase.from('estudiantes').select('matricula, carrera, semestre, estado, persona_id, personas(nombre, apellido)');
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
-        const resDoc = await supabase.from('docentes').select('id, departamento, estado, Nombre, empleados(persona_id, personas(nombre, apellido))');
+        const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
         const resAdm = await supabase.from('administrativos').select('id, area, estado, empleado_id, empleados(persona_id, personas(nombre, apellido))');
 
         if (resEst.error) throw resEst.error;
