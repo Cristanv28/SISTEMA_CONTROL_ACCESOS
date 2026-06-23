@@ -1,7 +1,3 @@
-// ====================================================================
-//                            js/index.js
-// ====================================================================
-
 const dbClient = window.supabase; // Cliente global de Supabase
 let modalEmergenciaInstance;
 
@@ -56,7 +52,13 @@ async function cargarContadoresGlobales() {
         // A. Entradas de hoy
         const { count: entradasHoy, error: errEnt } = await dbClient
             .from('entradas_salidas')
-            .select('*', { count: 'exact', head: true })
+            .select(`
+             *,
+            personas (
+            nombre,
+            apellido
+            )
+        `)
             .eq('fecha', hoyStr)
             .eq('tipo', 'Entrada');
 
@@ -109,7 +111,7 @@ async function cargarMonitoreoTiempoReal() {
         }
 
         data.forEach(reg => {
-            const nombre = reg.nombre ? `${reg.nombre} ${reg.apellido || ''}` : `Usuario #${reg.id_usuario || 'Anon'}`;
+            const nombre = reg.personas? `${reg.personas.nombre} ${reg.personas.apellido}`: `Usuario #${reg.persona_id}`;
             const badgeTipo = reg.tipo === 'Entrada' 
                 ? `<span class="badge bg-success-subtle text-success text-uppercase">Entrada</span>`
                 : `<span class="badge bg-primary-subtle text-primary text-uppercase">Salida</span>`;
