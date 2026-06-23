@@ -56,16 +56,10 @@ async function cargarContadoresGlobales() {
 
         // A. Entradas de hoy
         const { count: entradasHoy, error: errEnt } = await dbClient
-            .from('entradas_salidas')
-            .select(`
-             *,
-            personas (
-            nombre,
-            apellido
-            )
-        `)
-            .eq('fecha', hoyStr)
-            .eq('tipo', 'Entrada');
+    .from('entradas_salidas')
+    .select('*', { count: 'exact', head: true })
+    .eq('fecha', hoyStr)
+    .eq('tipo', 'Entrada');
 
         // B. Intentos denegados de hoy
         const { count: denegadosHoy, error: errDen } = await dbClient
