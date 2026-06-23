@@ -403,3 +403,31 @@ async function eliminarPersona(id) {
         }
     }
 }
+// 5. FILTRAR TARJETAS EN LA TABLA (Por Rol o Estado)
+function filtrarTarjetas(valorFiltro) {
+ 
+    if (!valorFiltro) {
+        const select = document.querySelector('select[onchange*="filtrarTarjetas"]');
+        valorFiltro = select ? select.value : '';
+    }
+
+    const filtro = valorFiltro.toLowerCase().trim();
+    const filas = document.querySelectorAll('#tablaTarjetas tr');
+
+    filas.forEach(tr => {
+     
+        if (!filtro || filtro === 'todos' || filtro === '') {
+            tr.style.display = '';
+            return;
+        }
+
+        const textoRol = tr.cells[2] ? tr.cells[2].innerText.toLowerCase() : '';
+        const textoEstado = tr.cells[5] ? tr.cells[5].innerText.toLowerCase() : '';
+
+        if (textoRol.includes(filtro) || textoEstado.includes(filtro)) {
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
+    });
+}
