@@ -381,7 +381,7 @@ async function activarPersona(id) {
     if (confirm("¿Deseas activar nuevamente a esta persona?")) {
         const { error } = await supabase
             .from('personas')
-            .update({ activo: false }) // Cambiar a true si el campo en DB requiere true
+            .update({ activo: true }) 
             .eq('id', id);
         if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
     }
@@ -389,7 +389,7 @@ async function activarPersona(id) {
 
 // ACCIÓN: ELIMINAR PERSONA (Elimina de forma física de la DB)
 async function eliminarPersona(id) {
-    if (confirm("🚨 ¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona? Esto borrará sus registros asociados.")) {
+    if (confirm(" ¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona? Esto borrará sus registros asociados.")) {
         const { error } = await supabase
             .from('personas')
             .delete()
@@ -402,4 +402,29 @@ async function eliminarPersona(id) {
             cargarTablaTarjetas();
         }
     }
+}
+
+// Asegúrate de que esto esté al final de tu js/tarjetas.js
+function filtrarTarjetas(valorFiltro) {
+    if (!valorFiltro) {
+        const select = document.querySelector('select[onchange*="filtrarTarjetas"]');
+        valorFiltro = select ? select.value : '';
+    }
+    const filtro = valorFiltro.toLowerCase().trim();
+    const filas = document.querySelectorAll('#tablaTarjetas tr');
+
+    filas.forEach(tr => {
+        if (!filtro || filtro === 'todos' || filtro === '') {
+            tr.style.display = '';
+            return;
+        }
+        const textoRol = tr.cells[2] ? tr.cells[2].innerText.toLowerCase() : '';
+        const textoEstado = tr.cells[5] ? tr.cells[5].innerText.toLowerCase() : '';
+
+        if (textoRol.includes(filtro) || textoEstado.includes(filtro)) {
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
+    });
 }
