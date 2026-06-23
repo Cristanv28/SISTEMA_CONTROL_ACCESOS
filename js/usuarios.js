@@ -21,14 +21,14 @@ async function initUsuarios() {
 
         const resEst = await supabase.from('estudiantes').select('matricula, carrera, semestre, estado, persona_id, personas(nombre, apellido)');
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
-        const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
+        const resDoc = await supabase.from('docentes').select('*');
         const resAdm = await supabase.from('administrativos').select('*');
        console.log("ADMINISTRATIVOS:", resAdm);
        console.log("ADMINISTRATIVOS DATA:", resAdm.data);
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
-        //if (resDoc.error) throw resDoc.error;
+        if (resDoc.error) throw resDoc.error;
         if (resAdm.error) throw resAdm.error;
 
         listaEstudiantes = resEst.data || [];
@@ -94,7 +94,7 @@ function filtrarTablas() {
     const tDoc = document.getElementById('tablaDocentes');
     tDoc.innerHTML = "";
     listaDocentes.forEach(d => {
-        const nombreCompleto = d.nombre || '';
+        const nombreCompleto = d.empleado_id || '';
         if (!nombreCompleto.toLowerCase().includes(busqueda)) return;
 
         const badgeClass = d.estado === 'Activo' ? 'bg-success' : 'bg-danger';
@@ -126,8 +126,8 @@ function filtrarTablas() {
                 <td>${a.area}</td>
                 <td><span class="badge ${badgeClass}">${a.estado}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionAdmin('${a.id}', '${a.nombre}', '', '${a.area}')">✏️ Editar</button>
-<button class="btn btn-sm btn-danger" onclick="eliminarRegistro('administrativos', 'id', '${a.id}')">🗑️ Eliminar</button>
+                    <button class="btn btn-sm btn-warning text-dark me-1"
+                    onclick="prepararEdicionAdmin('${a.id}', '${a.nombre}', '', '${a.area}')">✏️ Editar</button>
                 </td>
             </tr>`;
     });
