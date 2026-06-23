@@ -347,3 +347,24 @@ esp32Socket.onmessage = (event) => {
 esp32Socket.onerror = (error) => {
     console.error("Error en el socket del ESP32:", error);
 };
+
+
+// ===============================
+// REALTIME SUPABASE (NO MODIFICA NADA)
+// ===============================
+
+dbClient
+.channel('realtime-entradas-salidas')
+.on(
+    'postgres_changes',
+    {
+        event: '*',
+        schema: 'public',
+        table: 'entradas_salidas'
+    },
+    () => {
+        cargarContadoresGlobales();
+        cargarMonitoreoTiempoReal();
+    }
+)
+.subscribe();
