@@ -223,7 +223,7 @@ async function actualizarEstudiante() {
 }
 
 async function actualizarDocente() {
-    const nombre = document.getElementById('doc_nombre').value.trim();
+    const nombre = document.getElementById('doc_id').value.trim();
     const apP = document.getElementById('doc_apellido_p').value.trim();
     const apM = document.getElementById('doc_apellido_m').value.trim();
     const depto = document.getElementById('doc_area').value.trim();
