@@ -21,12 +21,11 @@ async function initUsuarios() {
 
         const resEst = await supabase.from('estudiantes').select('matricula, carrera, semestre, estado, persona_id, personas(nombre, apellido)');
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
-
-       // const resDoc = await supabase.from('docentes').select('*');
-
         const resDoc = await supabase.from('docentes').select('id, departamento, estado, nombre, empleados(persona_id, personas(nombre, apellido))');
         const resAdm = await supabase.from('administrativos').select('*');
-
+        console.log("DOCENTES:", resDoc.data);
+        console.log("ADMIN:", resAdm.data);
+        
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
         //if (resDoc.error) throw resDoc.error;
@@ -34,7 +33,7 @@ async function initUsuarios() {
 
         listaEstudiantes = resEst.data || [];
         listaEmpleados = resEmp.data || [];
-       // listaDocentes = resDoc.data || [];
+        listaDocentes = resDoc.data || [];
         listaAdministrativos = resAdm.data || [];
 
         actualizarContadores();
