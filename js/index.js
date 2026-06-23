@@ -231,7 +231,7 @@ async function cargarCodigos() {
         data.forEach(item => {
             select.innerHTML += `
                 <option value="${item.id}" data-color="${item.color ? item.color.toLowerCase() : ''}">
-                    ⚠️ [${item.codigo}] - ${item.descripcion}
+                     [${item.codigo}] - ${item.descripcion}
                 </option>
             `;
         });
@@ -260,10 +260,10 @@ async function verificarEmergenciasActivas() {
             banner.style.display = 'block';
             if (emergencia.tipo === 'lockdown') {
                 banner.className = "alert bg-danger text-center fw-bold mb-4";
-                banner.innerHTML = "🚨 LOCKDOWN ACTIVADO: EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO 🔒";
+                banner.innerHTML = " LOCKDOWN ACTIVADO: EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO ";
             } else {
                 banner.className = "alert bg-warning text-dark text-center fw-bold mb-4";
-                banner.innerHTML = "🚪 EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS 🏃‍♂️";
+                banner.innerHTML = " EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS ";
             }
         } else {
             banner.style.display = 'none';
@@ -296,7 +296,6 @@ async function activarEmergencia() {
         const modoBloqueo = (tipo === 'lockdown') ? 'bloqueo_total' : 'normal';
         await dbClient.from('modo_acceso').update({ modo: modoBloqueo }).eq('id', 1);
 
-        // 🚀 3. AVISO INMEDIATO AL ESP32 POR WEBSOCKET
         if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
             esp32Socket.send(`EMERGENCIA:${tipo}`); // Envía "EMERGENCIA:lockdown" o "EMERGENCIA:evacuacion"
         }
@@ -306,7 +305,7 @@ async function activarEmergencia() {
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         
-        alert(`🚨 ¡Protocolo de ${tipo.toUpperCase()} propagado de forma exitosa!`);
+        alert(` ¡Protocolo de ${tipo.toUpperCase()} propagado de forma exitosa!`);
 
     } catch (err) {
         alert("Error al activar emergencia: " + err.message);
@@ -329,7 +328,6 @@ async function desactivarEmergencia() {
         // 2. Regresar compuertas a la normalidad
         await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
 
-        // 🚀 3. AVISO DE APAGADO AL ESP32 POR WEBSOCKET
         if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
             esp32Socket.send("NORMALIZAR"); // Le dice al ESP32 que apague el buzzer y limpie el LCD
         }
@@ -348,10 +346,10 @@ async function desactivarEmergencia() {
 /**
  * 5. CONEXIÓN WEBSOCKET CON ESP32
  */
-const esp32Socket = new WebSocket("ws://192.168.101.200:81");
+const esp32Socket = new WebSocket("ws://192.168.137.1:81");
 
 esp32Socket.onopen = () => {
-    console.log("✅ Conexión WebSocket establecida con el ESP32 Principal");
+    console.log(" Conexión WebSocket establecida con el ESP32 Principal");
 };
 
 esp32Socket.onmessage = (event) => {
