@@ -346,7 +346,7 @@ async function desactivarEmergencia() {
 /**
  * 5. CONEXIÓN WEBSOCKET CON ESP32
  */
-const esp32Socket = new WebSocket("ws://10.238.148.208:81");
+const esp32Socket = new WebSocket("ws://10.238.148.101:81");
 
 esp32Socket.onopen = () => {
     console.log(" Conexión WebSocket establecida con el ESP32 Principal");
