@@ -23,25 +23,25 @@
 
         <div class="row g-4 mb-4 justify-content-center">
             <div class="col-md-3">
-                <div class="card bg-dark stats-card">
+                <div class="stat-card blue">
                     <h6 class="text-white">Estudiantes</h6>
                     <h2 id="statEstudiantes"class="text-white">—</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-dark stats-card">
+                <div class="stat-card green">
                     <h6 class="text-white" >Docentes</h6>
                     <h2 id="statDocentes"class="text-white">—</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-dark stats-card" >
+                <div class="stat-card yellow">
                     <h6 class="text-white">Administrativos</h6>
                     <h2 id="statAdmin"class="text-white">—</h2>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card bg-dark stats-card">
+                <div class="stat-card green">
                     <h6 class="text-white">Empleados</h6>
                     <h2 id="statEmpleados"class="text-white">—</h2>
                 </div>
@@ -51,10 +51,10 @@
         <div class="card text-white p-4 mb-4" style="background-color:#112266">
             <div class="row g-3">
                 <div class="col-md-9">
-                    <input class="form-control" id="busqueda" placeholder="Buscar por nombre o matrícula..." oninput="filtrarTablas()">
+                    <input class="form-input-custom" id="busqueda" placeholder="🔍 Buscar por nombre o identificador..." oninput="filtrarTarjetas()">
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select bg-dark" id="filtroPor" onchange="filtrarTablas()">
+                    <select class="form-select-custom" id="filtroPor" onchange="filtrarTablas()">
                         <option value="" class="text-white">Todos los tipos</option>
                         <option value="estudiantes" class="text-white">Estudiantes</option>
                         <option value="docentes"class="text-white">Docentes</option>

@@ -26,16 +26,16 @@
             </div>
         </div>
         <!-- FILTROS -->
-        <div class="card bg-dark text-white p-4 mb-4 ">
+        <div class="card text-white p-4 mb-4" style="background-color:#112266">
             <h5 class="mb-3">Filtros</h5>
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Fecha</label>
-                    <input type="date" class="form-control" id="filterDate" min="2026-01-01" max="2026-12-31">
+                    <input type="date" class="form-input-custom" id="filterDate" min="2026-01-01" max="2026-12-31">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Tipo de Evento</label>
-                    <select class="form-select" id="filterType">
+                    <select class="form-select-custom" id="filterType">
                         <option value="">Entrada / Salida</option>
                         <option value="entrada">Entrada</option>
                         <option value="salida">Salida</option>
@@ -43,7 +43,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Carrera</label>
-                    <input class="form-control" id="filterCareer" placeholder="Ej: Sistemas">
+                    <input class="form-input-custom" id="filterCareer" placeholder="Ej: Sistemas">
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button class="btn btn-primary w-100" onclick="applyFilters()">Filtrar</button>
@@ -51,7 +51,7 @@
             </div>
         </div>
         <!-- TABLA -->
-        <div class="card bg-dark text-white p-3">
+        <div class="card text-white p-3" style="background-color:#112266">
             <h5 class="mb-3">Registro de Entradas y Salidas</h5>
             <table class="table table-secondary table-hover">
                 <thead>
