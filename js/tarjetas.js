@@ -368,35 +368,79 @@ function cancelarModoRegistro() {
 // ACCIÓN: DESACTIVAR PERSONA
 async function desactivarPersona(id) {
     if (confirm("¿Seguro que deseas desactivar a esta persona?")) {
-        const { error } = await supabase
+        // 1. Desactivar la persona
+        const { error: errPersona } = await supabase
             .from('personas')
             .update({ activo: false })
             .eq('id', id);
-        if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
+
+        if (errPersona) { alert("Error: " + errPersona.message); return; }
+
+        // 2. Desactivar su tarjeta también
+        const { error: errTarjeta } = await supabase
+            .from('tarjeta_registro')
+            .update({ estado: 'Inactivo' })
+            .eq('persona_id', id);
+
+        if (errTarjeta) console.warn("Aviso al desactivar tarjeta:", errTarjeta.message);
+
+        cargarEstadisticas();
+        cargarTablaTarjetas();
     }
 }
 
 // ACCIÓN: ACTIVAR PERSONA
 async function activarPersona(id) {
     if (confirm("¿Deseas activar nuevamente a esta persona?")) {
-        const { error } = await supabase
+        // 1. Activar la persona
+        const { error: errPersona } = await supabase
             .from('personas')
-            .update({ activo: true }) 
+            .update({ activo: true })
             .eq('id', id);
-        if (!error) { cargarEstadisticas(); cargarTablaTarjetas(); }
+
+        if (errPersona) { alert("Error: " + errPersona.message); return; }
+
+        // 2. Reactivar su tarjeta también
+        const { error: errTarjeta } = await supabase
+            .from('tarjeta_registro')
+            .update({ estado: 'Activo' })
+            .eq('persona_id', id);
+
+        if (errTarjeta) console.warn("Aviso al activar tarjeta:", errTarjeta.message);
+
+        cargarEstadisticas();
+        cargarTablaTarjetas();
     }
 }
 
-// ACCIÓN: ELIMINAR PERSONA (Elimina de forma física de la DB)
+// ACCIÓN: ELIMINAR PERSONA
 async function eliminarPersona(id) {
-    if (confirm(" ¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona? Esto borrará sus registros asociados.")) {
-        const { error } = await supabase
+    if (confirm("¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona?")) {
+
+        // 1. Limpiar registro_tarjeta_pendiente (causa el error de FK)
+        const { error: errPendiente } = await supabase
+            .from('registro_tarjeta_pendiente')
+            .delete()
+            .eq('persona_id', id);
+
+        if (errPendiente) { alert("Error al limpiar pendientes: " + errPendiente.message); return; }
+
+        // 2. Eliminar tarjeta vinculada
+        const { error: errTarjeta } = await supabase
+            .from('tarjeta_registro')
+            .delete()
+            .eq('persona_id', id);
+
+        if (errTarjeta) { alert("Error al eliminar tarjeta: " + errTarjeta.message); return; }
+
+        // 3. Ahora sí eliminar la persona
+        const { error: errPersona } = await supabase
             .from('personas')
             .delete()
             .eq('id', id);
-            
-        if (error) {
-            alert("Error al eliminar: " + error.message);
+
+        if (errPersona) {
+            alert("Error al eliminar persona: " + errPersona.message);
         } else {
             cargarEstadisticas();
             cargarTablaTarjetas();
