@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>BD Distribuida</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --bg: #080f1e;
+            --panel: #0d1b2e;
+            --border: #1e3a5f;
+            --accent: #3b82f6;
+            --accent2: #06b6d4;
+            --success: #10b981;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+            --muted: #64748b;
+            --text: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+        header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1rem; }
+        header i { font-size: 1.6rem; color: var(--accent2); }
+        header h1 { font-size: 1.2rem; font-weight: 600; color: #fff; }
+        header p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+        .badge-alumno { background: #1e3a5f; color: var(--accent2); font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--accent2); }
+
+        main { max-width: 960px; margin: 2rem auto; padding: 0 1.5rem 4rem; }
+
+        .step-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.5rem; overflow: hidden; }
+        .step-header { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+        .step-num { width: 32px; height: 32px; border-radius: 50%; background: #1e3a5f; color: var(--accent); font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .step-title { flex: 1; font-weight: 600; font-size: 0.95rem; }
+        .step-status { font-size: 0.75rem; padding: 3px 10px; border-radius: 20px; background: #1e2d3d; color: var(--muted); border: 1px solid var(--border); }
+        .step-status.ok { background: #052e16; color: var(--success); border-color: var(--success); }
+        .step-status.running { background: #1c1a07; color: var(--warn); border-color: var(--warn); }
+        .step-status.error { background: #2d0a0a; color: var(--danger); border-color: var(--danger); }
+
+        .step-body { padding: 1.25rem; display: none; }
+        .step-body.open { display: block; }
+
+        .step-desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6; }
+
+        pre { background: #020a14; border: 1px solid var(--border); border-radius: 6px; padding: 1rem; font-size: 0.75rem; color: #7dd3fc; overflow-x: auto; margin-bottom: 1rem; white-space: pre-wrap; }
+
+        .btn-run { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 0.5rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
+        .btn-run:hover { background: #2563eb; }
+        .btn-run:disabled { background: #1e3a5f; color: var(--muted); cursor: not-allowed; }
+
+        .btn-copy { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.9rem; font-size: 0.78rem; cursor: pointer; margin-left: 0.5rem; transition: color 0.2s, border-color 0.2s; }
+        .btn-copy:hover { color: var(--accent2); border-color: var(--accent2); }
+
+        .log-box { background: #020a14; border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.78rem; font-family: monospace; min-height: 48px; color: #94a3b8; margin-top: 1rem; display: none; }
+        .log-box.visible { display: block; }
+        .log-ok { color: var(--success); }
+        .log-err { color: var(--danger); }
+        .log-info { color: var(--accent2); }
+
+        .input-custom { background: #020a14; border: 1px solid var(--border); border-radius: 6px; padding: 0.5rem 0.75rem; color: var(--text); font-size: 0.85rem; width: 100%; margin-bottom: 0.75rem; }
+        .input-custom:focus { outline: none; border-color: var(--accent); }
+        label { font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; display: block; }
+
+        .info-box { background: #0a1929; border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 0.75rem 1rem; font-size: 0.82rem; color: #93c5fd; margin-bottom: 1rem; }
+        .warn-box { background: #1a1200; border-left: 3px solid var(--warn); border-radius: 0 6px 6px 0; padding: 0.75rem 1rem; font-size: 0.82rem; color: #fcd34d; margin-bottom: 1rem; }
+
+        .divider { border: none; border-top: 1px solid var(--border); margin: 0.75rem 0; }
+
+        .chip { display: inline-block; background: #1e3a5f; color: var(--accent2); font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; margin-right: 4px; margin-bottom: 4px; }
+
+        .progress-bar-wrap { background: #1e3a5f; border-radius: 20px; height: 6px; margin-top: 1.5rem; margin-bottom: 0.5rem; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 20px; transition: width 0.4s; }
+        .progress-label { font-size: 0.72rem; color: var(--muted); text-align: right; }
+    </style>
+</head>
+<body>
+
+<header>
+    <i class="bi bi-diagram-3-fill"></i>
+    <div>
+        <h1>Base de Datos Distribuida — Sistema de Control de Acceso</h1>
+        <p>Supabase PostgreSQL 15+ &nbsp;·&nbsp; <span class="badge-alumno">postgres_fdw</span></p>
+    </div>
+</header>
+
+<main>
+
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+    <p class="progress-label" id="progressLabel">0 de 5 pasos completados</p>
+
+    <!-- PASO 1 -->
+    <div class="step-card">
+        <div class="step-header" onclick="toggleStep('s1')">
+            <div class="step-num">1</div>
+            <div class="step-title">Nodo Remoto — Tablas físicas locales</div>
+            <span class="step-status" id="status-s1">Pendiente</span>
+            <i class="bi bi-chevron-down ms-2" id="icon-s1"></i>
+        </div>
+        <div class="step-body" id="body-s1">
+            <p class="step-desc">
+                Crea las tablas físicas en el <strong>Nodo Remoto (Sucursal)</strong>. 
+                Estas no dependen del nodo central y almacenan los fragmentos horizontales 
+                de estudiantes remotos y los datos biométricos pesados (fotos y encodings).
+            </p>
+            <div class="info-box"><i class="bi bi-info-circle"></i> Ejecuta este bloque en el SQL Editor del <strong>proyecto Supabase del Nodo Remoto</strong>.</div>
+            <span class="chip">Fragmentación Horizontal</span>
+            <span class="chip">Fragmentación Vertical</span>
+            <pre id="sql-s1">-- Fragmento Horizontal: Alumnos asignados a la sucursal remota
+CREATE TABLE IF NOT EXISTS public.estudiantes_remotos (
+  matricula   text PRIMARY KEY,
+  persona_id  integer,
+  carrera     text NOT NULL,
+  semestre    integer NOT NULL,
+  estado      text NOT NULL,
+  nombre      character varying DEFAULT ''
+);
+
+-- Fragmento Vertical: Datos pesados de autenticación biométrica
+CREATE TABLE IF NOT EXISTS public.personas_biometria_remota (
+  id            integer PRIMARY KEY,
+  foto_url      text,
+  foto_encoding text
+);</pre>
+            <button class="btn-run" onclick="ejecutarPaso('s1')"><i class="bi bi-play-fill"></i> Marcar como ejecutado</button>
+            <button class="btn-copy" onclick="copiarSQL('sql-s1')"><i class="bi bi-clipboard"></i> Copiar SQL</button>
+            <div class="log-box" id="log-s1"></div>
+        </div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div class="step-card">
+        <div class="step-header" onclick="toggleStep('s2')">
+            <div class="step-num">2</div>
+            <div class="step-title">Nodo Central — Extensión postgres_fdw y enlace</div>
+            <span class="step-status" id="status-s2">Pendiente</span>
+            <i class="bi bi-chevron-down ms-2" id="icon-s2"></i>
+        </div>
+        <div class="step-body" id="body-s2">
+            <p class="step-desc">
+                Instala la extensión <code>postgres_fdw</code> en el Nodo Central, 
+                configura el servidor foráneo apuntando al Nodo Remoto vía el 
+                Connection Pooler (puerto 6543) y mapea las credenciales de acceso.
+            </p>
+            <div class="warn-box"><i class="bi bi-exclamation-triangle"></i> Reemplaza el host y la contraseña con los valores reales de tu Nodo Remoto antes de ejecutar.</div>
+            <span class="chip">Conexión Multi-Nodo</span>
+            <span class="chip">Connection Pooler :6543</span>
+
+            <label>Host del Nodo Remoto</label>
+            <input class="input-custom" id="input-host" placeholder="db.XXXXXXXXXXXX.supabase.co" oninput="actualizarSQL()">
+
+            <label>Contraseña del Nodo Remoto</label>
+            <input class="input-custom" id="input-pass" type="password" placeholder="ContraNodo2026!" oninput="actualizarSQL()">
+
+            <pre id="sql-s2">-- 1. Habilitar extensión FDW
+CREATE EXTENSION IF NOT EXISTS postgres_fdw;
+
+-- 2. Registrar servidor foráneo (Nodo Remoto)
+DROP SERVER IF EXISTS servidor_sucursal CASCADE;
+CREATE SERVER servidor_sucursal
+  FOREIGN DATA WRAPPER postgres_fdw
+  OPTIONS (host 'db.XXXXXXXXXXXX.supabase.co', dbname 'postgres', port '6543');
+
+-- 3. Mapeo de credenciales
+CREATE USER MAPPING FOR postgres
+  SERVER servidor_sucursal
+  OPTIONS (user 'postgres', password 'TU_CONTRASEÑA');</pre>
+            <button class="btn-run" onclick="ejecutarPaso('s2')"><i class="bi bi-play-fill"></i> Marcar como ejecutado</button>
+            <button class="btn-copy" onclick="copiarSQL('sql-s2')"><i class="bi bi-clipboard"></i> Copiar SQL</button>
+            <div class="log-box" id="log-s2"></div>
+        </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="step-card">
+        <div class="step-header" onclick="toggleStep('s3')">
+            <div class="step-num">3</div>
+            <div class="step-title">Nodo Central — Tablas foráneas en esquema de_paso</div>
+            <span class="step-status" id="status-s3">Pendiente</span>
+            <i class="bi bi-chevron-down ms-2" id="icon-s3"></i>
+        </div>
+        <div class="step-body" id="body-s3">
+            <p class="step-desc">
+                Crea el esquema <code>de_paso</code> para encapsular las tablas foráneas y evitar colisiones 
+                de caché en la interfaz web. Luego enlaza las tablas físicas del Nodo Remoto.
+            </p>
+            <span class="chip">Transparencia de Localización</span>
+            <pre id="sql-s3">-- Esquema dedicado para tablas foráneas
+CREATE SCHEMA IF NOT EXISTS de_paso;
+
+-- Enlace a tabla de estudiantes remotos
+CREATE FOREIGN TABLE IF NOT EXISTS de_paso.estudiantes_remotos_link (
+  matricula   text,
+  persona_id  integer,
+  carrera     text,
+  semestre    integer,
+  estado      text,
+  nombre      character varying
+) SERVER servidor_sucursal
+  OPTIONS (schema_name 'public', table_name 'estudiantes_remotos');
+
+-- Enlace a tabla de biometría remota
+CREATE FOREIGN TABLE IF NOT EXISTS de_paso.personas_biometria_link (
+  id            integer,
+  foto_url      text,
+  foto_encoding text
+) SERVER servidor_sucursal
+  OPTIONS (schema_name 'public', table_name 'personas_biometria_remota');</pre>
+            <button class="btn-run" onclick="ejecutarPaso('s3')"><i class="bi bi-play-fill"></i> Marcar como ejecutado</button>
+            <button class="btn-copy" onclick="copiarSQL('sql-s3')"><i class="bi bi-clipboard"></i> Copiar SQL</button>
+            <div class="log-box" id="log-s3"></div>
+        </div>
+    </div>
+
+    <!-- PASO 4 -->
+    <div class="step-card">
+        <div class="step-header" onclick="toggleStep('s4')">
+            <div class="step-num">4</div>
+            <div class="step-title">Vista Global Unificada + Transacciones ACID</div>
+            <span class="step-status" id="status-s4">Pendiente</span>
+            <i class="bi bi-chevron-down ms-2" id="icon-s4"></i>
+        </div>
+        <div class="step-body" id="body-s4">
+            <p class="step-desc">
+                Crea la vista <code>vista_global_estudiantes</code> que unifica datos locales y remotos 
+                mediante UNION ALL. Luego implementa las tres funciones transaccionales PL/pgSQL 
+                con propiedades ACID y ROLLBACK automático ante fallos.
+            </p>
+            <span class="chip">ACID</span><span class="chip">PL/pgSQL</span><span class="chip">UNION ALL</span><span class="chip">ROLLBACK</span>
+            <pre id="sql-s4">-- Vista Global Unificada (abstrae el origen físico del dato)
+CREATE OR REPLACE VIEW public.vista_global_estudiantes AS
+SELECT matricula, persona_id, carrera, semestre, estado, nombre,
+       'Local (Nodo Central)'::text AS origen_datos
+FROM public.estudiantes WHERE estado = 'Activo'
+UNION ALL
+SELECT matricula, persona_id, carrera, semestre, estado, nombre,
+       'Remoto (Nodo Sucursal)'::text AS origen_datos
+FROM de_paso.estudiantes_remotos_link;
+
+-- Transacción 1: Escritura fragmentada vertical
+CREATE OR REPLACE FUNCTION registrar_persona_distribuida(
+  p_nombre text, p_apellido text, p_rol_id integer,
+  p_foto_url text, p_foto_encoding text
+) RETURNS integer LANGUAGE plpgsql AS $$
+DECLARE nuevo_id integer;
+BEGIN
+  INSERT INTO public.personas (nombre, apellido, rol_id, activo)
+  VALUES (p_nombre, p_apellido, p_rol_id, true)
+  RETURNING id INTO nuevo_id;
+
+  INSERT INTO de_paso.personas_biometria_link (id, foto_url, foto_encoding)
+  VALUES (nuevo_id, p_foto_url, p_foto_encoding);
+
+  RETURN nuevo_id;
+END; $$;
+
+-- Transacción 2: Logs de accesos + presencia en tiempo real
+CREATE OR REPLACE FUNCTION registrar_acceso_y_presencia(
+  p_persona_id integer, p_matricula text,
+  p_carrera text, p_tipo text, p_camara text
+) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  INSERT INTO public.entradas_salidas (persona_id, matricula, carrera, tipo, camara)
+  VALUES (p_persona_id, p_matricula, p_carrera, p_tipo, p_camara);
+
+  INSERT INTO public.presencia_actual (persona_id, dentro, ultima_actualizacion)
+  VALUES (p_persona_id, (p_tipo = 'Entrada'), now())
+  ON CONFLICT (persona_id)
+  DO UPDATE SET dentro = (p_tipo = 'Entrada'), ultima_actualizacion = now();
+END; $$;
+
+-- Transacción 3: Control de emergencias con cascada
+CREATE OR REPLACE FUNCTION activar_bloqueo_emergencia(
+  p_codigo_id uuid, p_tipo text
+) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  INSERT INTO public.emergencias_activas (codigo_id, tipo, activo)
+  VALUES (p_codigo_id, p_tipo, true);
+
+  UPDATE public.modo_acceso
+  SET modo = 'bloqueo_total', actualizado_en = now()
+  WHERE id = 1;
+END; $$;</pre>
+            <button class="btn-run" onclick="ejecutarPaso('s4')"><i class="bi bi-play-fill"></i> Marcar como ejecutado</button>
+            <button class="btn-copy" onclick="copiarSQL('sql-s4')"><i class="bi bi-clipboard"></i> Copiar SQL</button>
+            <div class="log-box" id="log-s4"></div>
+        </div>
+    </div>
+
+    <!-- PASO 5 -->
+    <div class="step-card">
+        <div class="step-header" onclick="toggleStep('s5')">
+            <div class="step-num">5</div>
+            <div class="step-title">Función de Dashboard Distribuido</div>
+            <span class="step-status" id="status-s5">Pendiente</span>
+            <i class="bi bi-chevron-down ms-2" id="icon-s5"></i>
+        </div>
+        <div class="step-body" id="body-s5">
+            <p class="step-desc">
+                Crea la función <code>obtener_dashboard_distribuido()</code> optimizada con índices 
+                en llaves primarias. Provee datos combinados de ambos nodos para el panel de control 
+                del frontend mediante una sola llamada RPC.
+            </p>
+            <span class="chip">Optimización servidor</span><span class="chip">RPC</span>
+            <pre id="sql-s5">CREATE OR REPLACE FUNCTION obtener_dashboard_distribuido()
+RETURNS TABLE (
+  matricula  text,
+  nombre     character varying,
+  carrera    text,
+  estado     text,
+  nodo       text
+) LANGUAGE plpgsql AS $$
+BEGIN
+  RETURN QUERY
+  SELECT v.matricula, v.nombre, v.carrera, v.estado, v.origen_datos
+  FROM public.vista_global_estudiantes v
+  ORDER BY v.carrera, v.matricula;
+END; $$;</pre>
+            <button class="btn-run" onclick="ejecutarPaso('s5')"><i class="bi bi-play-fill"></i> Marcar como ejecutado</button>
+            <button class="btn-copy" onclick="copiarSQL('sql-s5')"><i class="bi bi-clipboard"></i> Copiar SQL</button>
+            <div class="log-box" id="log-s5"></div>
+        </div>
+    </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="basadatosconsul.js"></script>
+</body>
+</html>
