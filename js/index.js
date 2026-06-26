@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Vinculamos los eventos click a los botones usando los IDs del nuevo HTML limpio
+    // Vinculamos los eventos click a los botones
     const btnActivar = document.getElementById("btnActivarEmergencia");
     const btnDesactivar = document.getElementById("btnDesactivarEmergencia");
 
@@ -26,10 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarMonitoreoTiempoReal();
     verificarEmergenciasActivas();
 
+    // Consultas de respaldo cada 3 segundos
     setInterval(() => {
-    cargarContadoresGlobales();
-    cargarMonitoreoTiempoReal();
-}, 3000);
+        cargarContadoresGlobales();
+        cargarMonitoreoTiempoReal();
+    }, 3000);
 
     // Evento visual: Cambia el borde del select según el color del código seleccionado
     const selectCodigoEl = document.getElementById('selectCodigoEmergencia');
@@ -56,50 +57,51 @@ async function cargarContadoresGlobales() {
 
         // A. Entradas de hoy
         const { count: entradasHoy, error: errEnt } = await dbClient
-    .from('entradas_salidas')
-    .select('*', { count: 'exact', head: true })
-    .eq('fecha', hoyStr)
-    .eq('tipo', 'Entrada');
+            .from('entradas_salidas')
+            .select('*', { count: 'exact', head: true })
+            .eq('fecha', hoyStr)
+            .eq('tipo', 'Entrada');
 
-    // B. Salidas de hoy
-const { count: salidasHoy, error: errSal } = await dbClient
-    .from('entradas_salidas')
-    .select('*', { count: 'exact', head: true })
-    .eq('fecha', hoyStr)
-    .eq('tipo', 'Salida');
+        // B. Salidas de hoy
+        const { count: salidasHoy, error: errSal } = await dbClient
+            .from('entradas_salidas')
+            .select('*', { count: 'exact', head: true })
+            .eq('fecha', hoyStr)
+            .eq('tipo', 'Salida');
 
-        // B. Intentos denegados de hoy
+        // C. Intentos denegados de hoy
         const { count: denegadosHoy, error: errDen } = await dbClient
             .from('accesos_denegados')
             .select('*', { count: 'exact', head: true });
 
-        // C. Estudiantes Activos
+        // D. Estudiantes Activos
         const { count: estActivos, error: errEst } = await dbClient
             .from('estudiantes')
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true })
+            .eq('estado', 'Activo'); // O la bandera que uses para activos
 
-        // D. Docentes Activos
+        // E. Docentes Activos
         const { count: docActivos, error: errDoc } = await dbClient
             .from('docentes')
             .select('*', { count: 'exact', head: true });
 
-            // E. Administrativos Activos
+        // F. Administrativos Activos
         const { count: adminActivos, error: errAdmin } = await dbClient
-        .from('administrativos')
-        .select('*', { count: 'exact', head: true });
+            .from('administrativos')
+            .select('*', { count: 'exact', head: true });
 
-        // F. Empleados Activos
+        // G. Empleados Activos
          const { count: empleadosActivos, error: errEmp } = await dbClient
-        .from('empleados')
-        .select('*', { count: 'exact', head: true });
+            .from('empleados')
+            .select('*', { count: 'exact', head: true });
 
-        // Inyectar valores de forma segura en el DOM
+        // Inyectar valores en el DOM de forma segura
         if (!errEnt && document.getElementById('accesos_hoy')) document.getElementById('accesos_hoy').innerText = entradasHoy || 0;
         if (!errSal && document.getElementById('salidas_hoy')) document.getElementById('salidas_hoy').innerText = salidasHoy || 0;
         if (!errDen && document.getElementById('denegados_hoy')) document.getElementById('denegados_hoy').innerText = denegadosHoy || 0;
         if (!errEst && document.getElementById('statEstudiantes')) document.getElementById('statEstudiantes').innerText = estActivos || 0;
         if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
-        if (!errAdmin && document.getElementById('statAdministrativos'))document.getElementById('statAdministrativos').innerText = adminActivos || 0;
+        if (!errAdmin && document.getElementById('statAdministrativos')) document.getElementById('statAdministrativos').innerText = adminActivos || 0;
         if (!errEmp && document.getElementById('statEmpleados')) document.getElementById('statEmpleados').innerText = empleadosActivos || 0;
 
     } catch (err) {
@@ -113,16 +115,16 @@ const { count: salidasHoy, error: errSal } = await dbClient
 async function cargarMonitoreoTiempoReal() {
     try {
         const { data, error } = await dbClient
-    .from('entradas_salidas')
-    .select(`
-        *,
-        personas (
-            nombre,
-            apellido
-        )
-    `)
-    .order('fecha_registro', { ascending: false })
-    .limit(8);
+            .from('entradas_salidas')
+            .select(`
+                *,
+                personas (
+                    nombre,
+                    apellido
+                )
+            `)
+            .order('fecha_registro', { ascending: false })
+            .limit(8);
 
         if (error) throw error;
 
@@ -136,7 +138,7 @@ async function cargarMonitoreoTiempoReal() {
         }
 
         data.forEach(reg => {
-            const nombre = reg.personas? `${reg.personas.nombre} ${reg.personas.apellido}`: `Usuario #${reg.persona_id}`;
+            const nombre = reg.personas ? `${reg.personas.nombre} ${reg.personas.apellido}` : `Usuario #${reg.persona_id}`;
             const badgeTipo = reg.tipo === 'Entrada' 
                 ? `<span class="badge bg-success-subtle text-success text-uppercase">Entrada</span>`
                 : `<span class="badge bg-primary-subtle text-primary text-uppercase">Salida</span>`;
@@ -215,7 +217,6 @@ async function cargarCodigos() {
         
         select.innerHTML = '<option value="">-- Selecciona un código maestro --</option>';
 
-        // CONSULTA CORREGIDA: descripcion y codigo en lugar de nombre
         const { data, error } = await dbClient
             .from('codigos_emergencia')
             .select('id, codigo, descripcion, color')
@@ -235,7 +236,7 @@ async function cargarCodigos() {
                 </option>
             `;
         });
-        console.log("¡Códigos inyectados con éxito en el select!");
+        console.log("¡Códigos inyectados con éxito!");
     } catch (err) { 
         console.error("Error al traer códigos de emergencia:", err.message); 
     }
@@ -243,7 +244,6 @@ async function cargarCodigos() {
 
 async function verificarEmergenciasActivas() {
     try {
-        // CONSULTA CORREGIDA: Filtramos por la columna 'activo' (true) en lugar de 'estado'
         const { data, error } = await dbClient
             .from('emergencias_activas')
             .select('*')
@@ -260,10 +260,10 @@ async function verificarEmergenciasActivas() {
             banner.style.display = 'block';
             if (emergencia.tipo === 'lockdown') {
                 banner.className = "alert bg-danger text-center fw-bold mb-4";
-                banner.innerHTML = " LOCKDOWN ACTIVADO: EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO ";
+                banner.innerHTML = "  EL ACCESO ESTÁ COMPLETAMENTE BLOQUEADO  ";
             } else {
                 banner.className = "alert bg-warning text-dark text-center fw-bold mb-4";
-                banner.innerHTML = " EVACUACIÓN ACTIVA: PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADOS ";
+                banner.innerHTML = "  PUERTAS ABIERTAS Y ACCESOS DE SALIDA LIBERADAS  ";
             }
         } else {
             banner.style.display = 'none';
@@ -281,7 +281,7 @@ async function activarEmergencia() {
     const codigoIdFinal = codigoId !== "" ? codigoId : null;
 
     try {
-        // 1. Guardar en Supabase
+        // 1. Guardar en Supabase. El ESP32 Principal lo leerá al hacer su pooling constante.
         const { error: errActiva } = await dbClient
             .from('emergencias_activas')
             .insert([{ 
@@ -296,16 +296,12 @@ async function activarEmergencia() {
         const modoBloqueo = (tipo === 'lockdown') ? 'bloqueo_total' : 'normal';
         await dbClient.from('modo_acceso').update({ modo: modoBloqueo }).eq('id', 1);
 
-        if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
-            esp32Socket.send(`EMERGENCIA:${tipo}`); // Envía "EMERGENCIA:lockdown" o "EMERGENCIA:evacuacion"
-        }
-
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         
-        alert(` ¡Protocolo de ${tipo.toUpperCase()} propagado de forma exitosa!`);
+        alert(`¡Protocolo de ${tipo.toUpperCase()} guardado en Base de Datos con éxito!`);
 
     } catch (err) {
         alert("Error al activar emergencia: " + err.message);
@@ -328,79 +324,69 @@ async function desactivarEmergencia() {
         // 2. Regresar compuertas a la normalidad
         await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
 
-        if (esp32Socket && esp32Socket.readyState === WebSocket.OPEN) {
-            esp32Socket.send("NORMALIZAR"); // Le dice al ESP32 que apague el buzzer y limpie el LCD
-        }
-
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
         
         verificarEmergenciasActivas();
         cargarModoAccesoActual();
         
-        alert("Sistema normalizado. Parámetros de control reestablecidos.");
+        alert("Sistema normalizado en base de datos. Parámetros reestablecidos.");
     } catch (err) {
         alert("Error al desactivar protocolo: " + err.message);
     }
 }
 
-/**
- * 5. CONEXIÓN WEBSOCKET CON ESP32
- */
-// ✅ Mismo nombre en todos lados
-const esp32Socket = new WebSocket("ws://192.168.1.100:81/");
 
-esp32Socket.onopen = () => {
-    console.log("Conexión WebSocket establecida con el ESP32");
-};
+// =============================================================
+// REALTIME SUPABASE (Gestión centralizada de eventos en tiempo real)
+// =============================================================
 
-esp32Socket.onmessage = (event) => {
-    // tu código...
-};
-
-esp32Socket.onerror = (error) => {
-    console.log("Error en el socket del ESP32:", error);
-};
-
-esp32Socket.onclose = () => {
-    console.log("Conexión cerrada");
-};
-
-esp32Socket.onmessage = (event) => {
-    const mensaje = event.data;
-    console.log("Mensaje desde el ESP32:", mensaje);
-
-    if (mensaje.startsWith("SCAN_REGISTRO:")) {
-        const uidCapturado = mensaje.split(":")[1];
-        const inputUID = document.getElementById("uid_codigo") || document.getElementById("inputTarjeta"); 
-        
-        if (inputUID) {
-            inputUID.value = uidCapturado;
-            alert("¡Tarjeta detectada en el lector! UID copiado: " + uidCapturado);
-        }
-    }
-};
-
-esp32Socket.onerror = (error) => {
-    console.error("Error en el socket del ESP32:", error);
-};
-
-
-// ===============================
-// REALTIME SUPABASE (NO MODIFICA NADA)
-// ===============================
-
+// Canal 1: Historial y Contadores
 dbClient
 .channel('realtime-entradas-salidas')
 .on(
     'postgres_changes',
-    {
-        event: '*',
-        schema: 'public',
-        table: 'entradas_salidas'
-    },
+    { event: '*', schema: 'public', table: 'entradas_salidas' },
     () => {
         cargarContadoresGlobales();
         cargarMonitoreoTiempoReal();
+    }
+)
+.subscribe();
+
+// Canal 2: Cambios de Modo o Emergencias (Reemplaza los avisos WebSocket)
+dbClient
+.channel('realtime-alertas')
+.on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'emergencias_activas' },
+    () => {
+        verificarEmergenciasActivas();
+    }
+)
+.on(
+    'postgres_changes',
+    { event: 'UPDATE', schema: 'public', table: 'modo_acceso' },
+    () => {
+        cargarModoAccesoActual();
+    }
+)
+.subscribe();
+
+// Canal 3: Escaneo para Modo Registro (Rellena el Input automáticamente si se escanea tarjeta)
+dbClient
+.channel('realtime-registro-pendiente')
+.on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'tarjeta_registro' },
+    (payload) => {
+        // Cuando el ESP32 de entrada inserta con éxito la nueva tarjeta vinculada:
+        const uidCapturado = payload.new.uid_tarjeta;
+        const inputUID = document.getElementById("uid_codigo") || document.getElementById("inputTarjeta"); 
+        
+        if (inputUID) {
+            inputUID.value = uidCapturado;
+            alert("¡Tarjeta vinculada con éxito desde el Lector de Entrada! UID: " + uidCapturado);
+        }
     }
 )
 .subscribe();
