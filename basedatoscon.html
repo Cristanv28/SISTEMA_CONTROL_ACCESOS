@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         :root {
-            --bg: #080f1e;
-            --panel: #0d1b2e;
+            --bg: #0d1b4b;
+            --panel: #112266;
             --border: #1e3a5f;
             --accent: #3b82f6;
             --accent2: #06b6d4;
@@ -76,13 +76,19 @@
 </head>
 <body>
 
-<header>
-    <i class="bi bi-diagram-3-fill"></i>
+<header class="d-flex justify-content-between align-items-center">
+
     <div>
         <h1>Base de Datos Distribuida — Sistema de Control de Acceso</h1>
-        <p>Supabase PostgreSQL 15+ &nbsp;·&nbsp; <span class="badge-alumno">postgres_fdw</span></p>
+        <p class="text-white"> Supabase PostgreSQL 15+ &nbsp;·&nbsp; <span class="badge-alumno">postgres_fdw</span></p>
     </div>
-</header>
+ <a href="index.html"
+       class="btn btn-outline-secondary btn-lg text-white px-4"
+       style="background:#656767;">
+        <i class="bi bi-arrow-clockwise"style="color:inherit;"></i>  
+        Volver al Inicio
+    </a>
+    </header>
 
 <main>
 
@@ -100,7 +106,7 @@
             <i class="bi bi-chevron-down ms-2" id="icon-s1"></i>
         </div>
         <div class="step-body" id="body-s1">
-            <p class="step-desc">
+            <p class="step-desc text-white">
                 Crea las tablas físicas en el <strong>Nodo Remoto (Sucursal)</strong>. 
                 Estas no dependen del nodo central y almacenan los fragmentos horizontales 
                 de estudiantes remotos y los datos biométricos pesados (fotos y encodings).
@@ -327,6 +333,7 @@ END; $$;</pre>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="basadatosconsul.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/basadatosconsul.js"></script>
 </body>
 </html>
