@@ -412,17 +412,14 @@ async function activarPersona(id) {
         cargarTablaTarjetas();
     }
 }
-
-// ACCIÓN: ELIMINAR PERSONA
 async function eliminarPersona(id) {
     if (confirm("¡ADVERTENCIA!\n¿Seguro que deseas ELIMINAR por completo a esta persona?")) {
 
-        // 1. Limpiar registro_tarjeta_pendiente (causa el error de FK)
+        // 1. Limpiar registro_tarjeta_pendiente
         const { error: errPendiente } = await supabase
             .from('registro_tarjeta_pendiente')
             .delete()
             .eq('persona_id', id);
-
         if (errPendiente) { alert("Error al limpiar pendientes: " + errPendiente.message); return; }
 
         // 2. Eliminar tarjeta vinculada
@@ -430,10 +427,23 @@ async function eliminarPersona(id) {
             .from('tarjeta_registro')
             .delete()
             .eq('persona_id', id);
-
         if (errTarjeta) { alert("Error al eliminar tarjeta: " + errTarjeta.message); return; }
 
-        // 3. Ahora sí eliminar la persona
+        // 3. Eliminar accesos faciales ← NUEVO
+        const { error: errFace } = await supabase
+            .from('accesos_faceid')
+            .delete()
+            .eq('persona_id', id);
+        if (errFace) { alert("Error al eliminar face ID: " + errFace.message); return; }
+
+        // 4. Eliminar embeddings faciales ← NUEVO
+        const { error: errEmbedding } = await supabase
+            .from('face_embeddings')
+            .delete()
+            .eq('persona_id', id);
+        if (errEmbedding) { alert("Error al eliminar embedding: " + errEmbedding.message); return; }
+
+        // 5. Ahora sí eliminar la persona
         const { error: errPersona } = await supabase
             .from('personas')
             .delete()
@@ -447,7 +457,6 @@ async function eliminarPersona(id) {
         }
     }
 }
-
 // Asegúrate de que esto esté al final de tu js/tarjetas.js
 function filtrarTarjetas(valorFiltro) {
     if (!valorFiltro) {
