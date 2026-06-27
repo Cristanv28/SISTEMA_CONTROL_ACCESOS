@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modalEmergenciaInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-        
+
 
         // EVENTO AUTOMÁTICO: Cuando se abra el modal, se cargan los códigos maestros
 
@@ -56,11 +56,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setInterval(() => {
 
-    cargarContadoresGlobales();
+        cargarContadoresGlobales();
 
-    cargarMonitoreoTiempoReal();
+        cargarMonitoreoTiempoReal();
 
-}, 3000);
+    }, 3000);
 
 
 
@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (selectCodigoEl) {
 
-        selectCodigoEl.addEventListener('change', function() {
+        selectCodigoEl.addEventListener('change', function () {
 
             const selectedOption = this.options[this.selectedIndex];
 
@@ -112,79 +112,121 @@ async function cargarContadoresGlobales() {
 
         // A. Entradas de hoy
 
-        const { count: entradasHoy, error: errEnt } = await dbClient
+        const {
+            count: entradasHoy,
+            error: errEnt
+        } = await dbClient
 
-    .from('entradas_salidas')
+            .from('entradas_salidas')
 
-    .select('*', { count: 'exact', head: true })
+            .select('*', {
+                count: 'exact',
+                head: true
+            })
 
-    .eq('fecha', hoyStr)
+            .eq('fecha', hoyStr)
 
-    .eq('tipo', 'Entrada');
+            .eq('tipo', 'Entrada');
 
 
 
-    // B. Salidas de hoy
+        // B. Salidas de hoy
 
-const { count: salidasHoy, error: errSal } = await dbClient
+        const {
+            count: salidasHoy,
+            error: errSal
+        } = await dbClient
 
-    .from('entradas_salidas')
+            .from('entradas_salidas')
 
-    .select('*', { count: 'exact', head: true })
+            .select('*', {
+                count: 'exact',
+                head: true
+            })
 
-    .eq('fecha', hoyStr)
+            .eq('fecha', hoyStr)
 
-    .eq('tipo', 'Salida');
+            .eq('tipo', 'Salida');
 
 
 
         // B. Intentos denegados de hoy
 
-        const { count: denegadosHoy, error: errDen } = await dbClient
+        const {
+            count: denegadosHoy,
+            error: errDen
+        } = await dbClient
 
             .from('accesos_denegados')
 
-            .select('*', { count: 'exact', head: true });
+            .select('*', {
+                count: 'exact',
+                head: true
+            });
 
 
 
         // C. Estudiantes Activos
 
-        const { count: estActivos, error: errEst } = await dbClient
+        const {
+            count: estActivos,
+            error: errEst
+        } = await dbClient
 
             .from('estudiantes')
 
-            .select('*', { count: 'exact', head: true });
+            .select('*', {
+                count: 'exact',
+                head: true
+            });
 
 
 
         // D. Docentes Activos
 
-        const { count: docActivos, error: errDoc } = await dbClient
+        const {
+            count: docActivos,
+            error: errDoc
+        } = await dbClient
 
             .from('docentes')
 
-            .select('*', { count: 'exact', head: true });
+            .select('*', {
+                count: 'exact',
+                head: true
+            });
 
 
 
-            // E. Administrativos Activos
+        // E. Administrativos Activos
 
-        const { count: adminActivos, error: errAdmin } = await dbClient
+        const {
+            count: adminActivos,
+            error: errAdmin
+        } = await dbClient
 
-        .from('administrativos')
+            .from('administrativos')
 
-        .select('*', { count: 'exact', head: true });
+            .select('*', {
+                count: 'exact',
+                head: true
+            });
 
 
 
         // F. Empleados Activos
 
-         const { count: empleadosActivos, error: errEmp } = await dbClient
+        const {
+            count: empleadosActivos,
+            error: errEmp
+        } = await dbClient
 
-        .from('empleados')
+            .from('empleados')
 
-        .select('*', { count: 'exact', head: true });
+            .select('*', {
+                count: 'exact',
+                head: true
+            });
 
 
 
@@ -200,7 +242,7 @@ const { count: salidasHoy, error: errSal } = await dbClient
 
         if (!errDoc && document.getElementById('statDocentes')) document.getElementById('statDocentes').innerText = docActivos || 0;
 
-        if (!errAdmin && document.getElementById('statAdministrativos'))document.getElementById('statAdministrativos').innerText = adminActivos || 0;
+        if (!errAdmin && document.getElementById('statAdministrativos')) document.getElementById('statAdministrativos').innerText = adminActivos || 0;
 
         if (!errEmp && document.getElementById('statEmpleados')) document.getElementById('statEmpleados').innerText = empleadosActivos || 0;
 
@@ -221,99 +263,85 @@ const { count: salidasHoy, error: errSal } = await dbClient
  * 2. MONITOR DE ACTIVIDAD EN TIEMPO REAL (HISTORIAL RECIENTE)
 
  */
-
 async function cargarMonitoreoTiempoReal() {
-
     try {
+        // Traer entradas/salidas por RFID
+        const { data: rfid, error: errRfid } = await dbClient
+            .from('entradas_salidas')
+            .select(`*, personas ( nombre, apellido )`)
+            .order('fecha_registro', { ascending: false })
+            .limit(8);
 
-        const { data, error } = await dbClient
+        // Traer accesos por Face ID
+        const { data: face, error: errFace } = await dbClient
+            .from('accesos_faceid')
+            .select(`*, personas ( nombre, apellido )`)
+            .eq('resultado', true)
+            .order('fecha', { ascending: false })
+            .limit(8);
 
-    .from('entradas_salidas')
-
-    .select(`
-
-        *,
-
-        personas (
-
-            nombre,
-
-            apellido
-
-        )
-
-    `)
-
-    .order('fecha_registro', { ascending: false })
-
-    .limit(8);
-
-
-
-        if (error) throw error;
-
-
+        if (errRfid) throw errRfid;
 
         const tbody = document.getElementById('tablaActividad');
-
         if (!tbody) return;
-
         tbody.innerHTML = "";
 
+        // Combinar y ordenar por fecha
+        const rfidMapped = (rfid || []).map(r => ({
+            nombre:  r.personas ? `${r.personas.nombre} ${r.personas.apellido}` : `Usuario #${r.persona_id}`,
+            metodo:  'NFC / Tarjeta',
+            tipo:    r.tipo,
+            fecha:   r.fecha_registro || '',
+            ok:      true
+        }));
 
+        const faceMapped = (face || []).map(f => ({
+            nombre:  f.personas ? `${f.personas.nombre} ${f.personas.apellido}` : `Usuario #${f.persona_id}`,
+            metodo:  'Face ID',
+            tipo:    'Entrada',
+            fecha:   f.fecha || '',
+            ok:      f.resultado
+        }));
 
-        if (!data || data.length === 0) {
+        const todos = [...rfidMapped, ...faceMapped]
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            .slice(0, 8);
 
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Sin actividad registrada el día de hoy.</td></tr>`;
-
+        if (todos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Sin actividad registrada.</td></tr>`;
             return;
-
         }
 
-
-
-        data.forEach(reg => {
-
-            const nombre = reg.personas? `${reg.personas.nombre} ${reg.personas.apellido}`: `Usuario #${reg.persona_id}`;
-
-            const badgeTipo = reg.tipo === 'Entrada' 
-
+        todos.forEach(reg => {
+            const badgeTipo = reg.tipo === 'Entrada'
                 ? `<span class="badge bg-success-subtle text-success text-uppercase">Entrada</span>`
-
                 : `<span class="badge bg-primary-subtle text-primary text-uppercase">Salida</span>`;
 
-
+            const badgeMetodo = reg.metodo === 'Face ID'
+                ? `<span class="badge bg-purple-subtle" style="background:#4c1d95; color:#e9d5ff;">🧠 Face ID</span>`
+                : `<span class="badge bg-secondary-subtle text-secondary">💳 NFC</span>`;
 
             tbody.innerHTML += `
-
                 <tr>
-
-                    <td><strong>${nombre}</strong></td>
-
-                    <td><span class="text-muted" style="font-size:0.85rem;">Identificador Biométrico/NFC</span></td>
-
+                    <td><strong>${reg.nombre}</strong></td>
+                    <td>${badgeMetodo}</td>
                     <td>${badgeTipo}</td>
-
-                    <td class="font-monospace" style="font-size:0.85rem;">${reg.fecha || ''} ${reg.hora || ''}</td>
-
+                    <td class="font-monospace" style="font-size:0.85rem;">${new Date(reg.fecha).toLocaleString()}</td>
                 </tr>
-
             `;
-
         });
 
-
-
     } catch (err) {
-
         console.error("Error en monitoreo de tiempo real:", err.message);
-
     }
-
 }
 
-
-
+dbClient
+.channel('realtime-faceid')
+.on('postgres_changes', { event: '*', schema: 'public', table: 'accesos_faceid' }, () => {
+    cargarMonitoreoTiempoReal();
+})
+.subscribe();
 /**
 
  * 3. CONTROL DE RESTRICCIONES (TABLA modo_acceso)
@@ -324,7 +352,10 @@ async function cargarModoAccesoActual() {
 
     try {
 
-        const { data, error } = await dbClient
+        const {
+            data,
+            error
+        } = await dbClient
 
             .from('modo_acceso')
 
@@ -348,9 +379,9 @@ async function cargarModoAccesoActual() {
 
         actualizarBadgeModo(data.modo);
 
-    } catch (err) { 
+    } catch (err) {
 
-        console.error("Error al obtener el modo de acceso:", err.message); 
+        console.error("Error al obtener el modo de acceso:", err.message);
 
     }
 
@@ -364,11 +395,15 @@ async function activarRestriccion() {
 
     try {
 
-        const { error } = await dbClient
+        const {
+            error
+        } = await dbClient
 
             .from('modo_acceso')
 
-            .update({ modo: seleccionado })
+            .update({
+                modo: seleccionado
+            })
 
             .eq('id', 1);
 
@@ -426,7 +461,7 @@ async function cargarCodigos() {
 
         if (!select) return;
 
-        
+
 
         select.innerHTML = '<option value="">-- Selecciona un código maestro --</option>';
 
@@ -434,7 +469,10 @@ async function cargarCodigos() {
 
         // CONSULTA CORREGIDA: descripcion y codigo en lugar de nombre
 
-        const { data, error } = await dbClient
+        const {
+            data,
+            error
+        } = await dbClient
 
             .from('codigos_emergencia')
 
@@ -446,7 +484,7 @@ async function cargarCodigos() {
 
         if (error) throw error;
 
-        
+
 
         if (!data || data.length === 0) {
 
@@ -474,9 +512,9 @@ async function cargarCodigos() {
 
         console.log("¡Códigos inyectados con éxito en el select!");
 
-    } catch (err) { 
+    } catch (err) {
 
-        console.error("Error al traer códigos de emergencia:", err.message); 
+        console.error("Error al traer códigos de emergencia:", err.message);
 
     }
 
@@ -490,7 +528,10 @@ async function verificarEmergenciasActivas() {
 
         // CONSULTA CORREGIDA: Filtramos por la columna 'activo' (true) en lugar de 'estado'
 
-        const { data, error } = await dbClient
+        const {
+            data,
+            error
+        } = await dbClient
 
             .from('emergencias_activas')
 
@@ -538,9 +579,9 @@ async function verificarEmergenciasActivas() {
 
         }
 
-    } catch (err) { 
+    } catch (err) {
 
-        console.error("Error al comprobar banderas de emergencia:", err.message); 
+        console.error("Error al comprobar banderas de emergencia:", err.message);
 
     }
 
@@ -566,17 +607,19 @@ async function activarEmergencia() {
 
         // 1. Guardar en Supabase
 
-        const { error: errActiva } = await dbClient
+        const {
+            error: errActiva
+        } = await dbClient
 
             .from('emergencias_activas')
 
-            .insert([{ 
+            .insert([{
 
-                tipo: tipo, 
+                tipo: tipo,
 
-                codigo_id: codigoIdFinal, 
+                codigo_id: codigoIdFinal,
 
-                activo: true 
+                activo: true
 
             }]);
 
@@ -590,7 +633,9 @@ async function activarEmergencia() {
 
         const modoBloqueo = (tipo === 'lockdown') ? 'bloqueo_total' : 'normal';
 
-        await dbClient.from('modo_acceso').update({ modo: modoBloqueo }).eq('id', 1);
+        await dbClient.from('modo_acceso').update({
+            modo: modoBloqueo
+        }).eq('id', 1);
 
 
 
@@ -604,13 +649,13 @@ async function activarEmergencia() {
 
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
 
-        
+
 
         verificarEmergenciasActivas();
 
         cargarModoAccesoActual();
 
-        
+
 
         alert(` ¡Protocolo de ${tipo.toUpperCase()} propagado de forma exitosa!`);
 
@@ -632,11 +677,13 @@ async function desactivarEmergencia() {
 
         // 1. Desactivar en Supabase
 
-        const { error } = await dbClient
+        const {
+            error
+        } = await dbClient
 
             .from('emergencias_activas')
 
-            .update({ 
+            .update({
 
                 activo: false,
 
@@ -654,7 +701,9 @@ async function desactivarEmergencia() {
 
         // 2. Regresar compuertas a la normalidad
 
-        await dbClient.from('modo_acceso').update({ modo: 'normal' }).eq('id', 1);
+        await dbClient.from('modo_acceso').update({
+            modo: 'normal'
+        }).eq('id', 1);
 
 
 
@@ -668,13 +717,13 @@ async function desactivarEmergencia() {
 
         if (modalEmergenciaInstance) modalEmergenciaInstance.hide();
 
-        
+
 
         verificarEmergenciasActivas();
 
         cargarModoAccesoActual();
 
-        
+
 
         alert("Sistema normalizado. Parámetros de control reestablecidos.");
 
@@ -744,9 +793,9 @@ esp32Socket.onmessage = (event) => {
 
         const uidCapturado = mensaje.split(":")[1];
 
-        const inputUID = document.getElementById("uid_codigo") || document.getElementById("inputTarjeta"); 
+        const inputUID = document.getElementById("uid_codigo") || document.getElementById("inputTarjeta");
 
-        
+
 
         if (inputUID) {
 
@@ -782,31 +831,30 @@ esp32Socket.onerror = (error) => {
 
 dbClient
 
-.channel('realtime-entradas-salidas')
+    .channel('realtime-entradas-salidas')
 
-.on(
+    .on(
 
-    'postgres_changes',
+        'postgres_changes',
 
-    {
+        {
 
-        event: '*',
+            event: '*',
 
-        schema: 'public',
+            schema: 'public',
 
-        table: 'entradas_salidas'
+            table: 'entradas_salidas'
 
-    },
+        },
 
-    () => {
+        () => {
 
-        cargarContadoresGlobales();
+            cargarContadoresGlobales();
 
-        cargarMonitoreoTiempoReal();
+            cargarMonitoreoTiempoReal();
 
-    }
+        }
 
-)
+    )
 
-.subscribe(); 
-
+    .subscribe();
