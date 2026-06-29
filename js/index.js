@@ -745,7 +745,7 @@ async function desactivarEmergencia() {
 
 // ✅ Mismo nombre en todos lados
 
-const esp32Socket = new WebSocket("ws://192.168.101.200:81/");
+const esp32Socket = new WebSocket("ws://192.168.0.102:81/");
 
 
 
