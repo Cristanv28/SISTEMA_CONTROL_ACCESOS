@@ -40,12 +40,18 @@
                     <h2 id="statAdmin"class="text-warning">—</h2>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stat-card green">
                     <h6 class="text-white">Empleados</h6>
                     <h2 id="statEmpleados"class="text-success">—</h2>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="stat-card blue">
+                    <h6 class="text-white">Directivos</h6>
+                    <h2 id="statDirectivos" class="text-primary">—</h2>
+            </div>
+</div>
         </div>
 
         <div class="card text-white p-4 mb-4" style="background-color:#112266">
@@ -138,6 +144,24 @@
                     </table>
                 </div>
             </div>
+            <div id="seccionDirectivos">
+    <h4 class="text-white mb-3">Directivos</h4>
+    <div class="mb-5">
+        <table class="table table-primary table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Correo Institucional</th>
+                    <th>Puesto</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaDirectivos"></tbody>
+        </table>
+    </div>
+</div>
         </div>
     </div>
 
@@ -289,6 +313,7 @@
             </div>
         </div>
     </div>
+    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     

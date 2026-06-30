@@ -4,6 +4,7 @@ let listaEstudiantes = [];
 let listaDocentes = [];
 let listaAdministrativos = [];
 let listaEmpleados = [];
+let listaDirectivos = [];
 
 let editandoId = null;
 let editandoTipo = null; 
@@ -23,18 +24,22 @@ async function initUsuarios() {
         const resEmp = await supabase.from('empleados').select('id, puesto, estado, persona_id, personas(nombre, apellido)');
         const resDoc = await supabase.from('docentes').select('*');
         const resAdm = await supabase.from('administrativos').select('*');
+        const resDir = await supabase.from('directivos').select('*');
        console.log("ADMINISTRATIVOS:", resAdm);
        console.log("ADMINISTRATIVOS DATA:", resAdm.data);
+       console.log("DIRECTIVOS:", resDir);
 
         if (resEst.error) throw resEst.error;
         if (resEmp.error) throw resEmp.error;
         if (resDoc.error) throw resDoc.error;
         if (resAdm.error) throw resAdm.error;
+        if (resDir.error) throw resDir.error;
 
         listaEstudiantes = resEst.data || [];
         listaEmpleados = resEmp.data || [];
         listaDocentes = resDoc.data || [];
         listaAdministrativos = resAdm.data || [];
+        listaDirectivos = resDir.data || [];
         console.log("ADMINISTRATIVOS", listaAdministrativos);
 
         actualizarContadores();
@@ -54,6 +59,7 @@ function actualizarContadores() {
     document.getElementById('statDocentes').innerText = listaDocentes.filter(d => d.estado === 'Activo').length;
     document.getElementById('statAdmin').innerText = listaAdministrativos.filter(a => a.estado === 'Activo').length;
     document.getElementById('statEmpleados').innerText = listaEmpleados.filter(em => em.estado === 'Activo').length;
+    document.getElementById('statDirectivos').innerText = listaDirectivos.filter(d => d.estado === 'Activo').length;
 }
 
 /**
@@ -67,6 +73,7 @@ function filtrarTablas() {
     document.getElementById('seccionDocentes').style.display = (!filtroPor || filtroPor === 'docentes') ? 'block' : 'none';
     document.getElementById('seccionAdministrativos').style.display = (!filtroPor || filtroPor === 'administrativos') ? 'block' : 'none';
     document.getElementById('seccionEmpleados').style.display = (!filtroPor || filtroPor === 'empleados') ? 'block' : 'none';
+    document.getElementById('seccionDirectivos').style.display = (!filtroPor || filtroPor === 'directivos') ? 'block' : 'none';
 
     // RENDER ESTUDIANTES
     const tEst = document.getElementById('tablaEstudiantes');
@@ -153,7 +160,29 @@ function filtrarTablas() {
             </tr>`;
     });
 
-    verificarTablasVacias(tEst, tDoc, tAdm, textEmp);
+    // RENDER DIRECTIVOS
+const tDir = document.getElementById('tablaDirectivos');
+tDir.innerHTML = "";
+listaDirectivos.forEach(d => {
+    const nombreCompleto = `${d.nombre || ''} ${d.apellido || ''}`;
+    if (!nombreCompleto.toLowerCase().includes(busqueda) && !(d.correo_institucional || '').toLowerCase().includes(busqueda)) return;
+
+    const badgeClass = d.estado === 'Activo' ? 'bg-success' : 'bg-danger';
+    tDir.innerHTML += `
+        <tr>
+            <td class="font-monospace text-muted" style="font-size:0.75rem;">${d.id.substring(0,8)}...</td>
+            <td><strong>${nombreCompleto}</strong></td>
+            <td>${d.correo_institucional || ''}</td>
+            <td>${d.puesto || ''}</td>
+            <td><span class="badge ${badgeClass}">${d.estado}</span></td>
+            <td>
+                <button class="btn btn-sm btn-warning text-dark me-1" onclick="prepararEdicionDirectivo('${d.id}', '${d.nombre}', '${d.apellido}', '${d.correo_institucional}', '${d.puesto}')">✏️ Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('directivos', 'id', '${d.id}')">🗑️ Eliminar</button>
+            </td>
+        </tr>`;
+});
+
+   verificarTablasVacias(tEst, tDoc, tAdm, textEmp, tDir);
 }
 
 /**
@@ -200,6 +229,15 @@ function prepararEdicionEmpleado(id, nom, ape, puesto) {
     document.getElementById('emp_apellido_m').value = arrApe[1] || '';
     document.getElementById('emp_puesto').value = puesto;
     abrirModalManual('#modalEmpleado');
+}
+
+function prepararEdicionDirectivo(id, nom, ape, correo, puesto) {
+    editandoId = id; editandoTipo = 'directivo';
+    document.getElementById('dir_nombre').value = nom;
+    document.getElementById('dir_apellido').value = ape;
+    document.getElementById('dir_correo').value = correo;
+    document.getElementById('dir_puesto').value = puesto;
+    abrirModalManual('#modalDirectivo');
 }
 
 /**
@@ -270,6 +308,23 @@ async function actualizarEmpleado() {
         await supabase.from('empleados').update({ puesto: puesto }).eq('id', editandoId);
         finalizarFlujoModal('#modalEmpleado');
     } catch (err) { alert("Error al actualizar empleado: " + err.message); }
+}
+
+async function actualizarDirectivo() {
+    const nombre = document.getElementById('dir_nombre').value.trim();
+    const apellido = document.getElementById('dir_apellido').value.trim();
+    const correo = document.getElementById('dir_correo').value.trim();
+    const puesto = document.getElementById('dir_puesto').value.trim();
+
+    if (!nombre || !apellido || !correo || !puesto) return alert("Rellena todos los campos.");
+
+    try {
+        const { error } = await supabase.from('directivos')
+            .update({ nombre: nombre, apellido: apellido, correo_institucional: correo, puesto: puesto })
+            .eq('id', editandoId);
+        if (error) throw error;
+        finalizarFlujoModal('#modalDirectivo');
+    } catch (err) { alert("Error al actualizar directivo: " + err.message); }
 }
 
 /**
